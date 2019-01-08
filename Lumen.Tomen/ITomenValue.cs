@@ -1,9 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
-namespace Lumen.Tomen {
+﻿namespace Lumen.Tomen {
+	/// <summary> Base interface for all Tomen values</summary>
 	public interface ITomenValue {
 
 	}
