@@ -5,10 +5,10 @@ using System.Text;
 
 namespace Lumen.Tomen {
 	/// <summary> Tomen null value </summary>
-	public class TomenNull : ITomenValue {
-		public static TomenNull NULL { get; } = new TomenNull();
+	public class TomlNull : ITomlValue {
+		public static TomlNull NULL { get; } = new TomlNull();
 
-		private TomenNull() {
+		private TomlNull() {
 		}
 	}
 }

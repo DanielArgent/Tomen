@@ -2,12 +2,12 @@
 
 namespace Lumen.Tomen {
 	/// <summary> Tomen string </summary>
-	public class TomenString : ITomenValue, ITomenKey {
+	public class TomlString : ITomlValue, ITomenKey {
 		public String Value { get; set; }
 
 		/// <summary> Creates a Tomen string from System.String </summary>
 		/// <param name="value"> Value to wrap </param>
-		public TomenString(String value) {
+		public TomlString(String value) {
 			this.Value = value;
 		}
 

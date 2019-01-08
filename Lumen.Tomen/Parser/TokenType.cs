@@ -10,6 +10,15 @@ namespace Lumen.Tomen {
 
 		ASSIGNMENT,
 		EOF,
-		DOT
+		DOT,
+		DOUBLE,
+		INT,
+		PLUS,
+		MINUS,
+		INF,
+		NAN,
+		TRUE,
+		FALSE,
+		SPLIT
 	}
 }

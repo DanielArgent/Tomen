@@ -11,7 +11,10 @@ namespace Lumen.Tomen {
 			["="] = new Token(TokenType.ASSIGNMENT, "="),
 			["["] = new Token(TokenType.LBRACKET, "["),
 			["]"] = new Token(TokenType.RBRACKET, "]"),
+			["+"] = new Token(TokenType.PLUS, "+"),
+			["-"] = new Token(TokenType.MINUS, "-"),
 			["."] = new Token(TokenType.DOT, "."),
+			[","] = new Token(TokenType.SPLIT, "."),
 		};
 		private readonly String source;
 		private readonly Int32 length;
@@ -33,7 +36,10 @@ namespace Lumen.Tomen {
 			while (this.position < this.length) {
 				Char current = Peek(0);
 
-				if (current == '"') {
+				if (Char.IsDigit(current)) {
+					Number();
+				}
+				else if (current == '"') {
 					String();
 				}
 				else if (Char.IsLetter(current) || current == '_' || current == '$') {
@@ -183,6 +189,58 @@ namespace Lumen.Tomen {
 			}
 		}
 
+		private void Number() {
+			StringBuilder buffer = new StringBuilder();
+			Char current = Peek(0);
+
+			Boolean isScientic = false;
+
+			while (true) {
+				if (current == '.') {
+					// Не, ну логично же.
+					if (buffer.ToString().IndexOf('.') != -1) {
+						throw new Exception("лишняя точка < литерал num");
+					}
+				}
+				else if (current == '_') {
+					current = Next();
+					continue;
+				}
+				else if (!Char.IsDigit(current)) {
+					if (current == 'e') {
+						isScientic = true;
+						buffer.Append(current);
+						current = Next();
+						if (current == '-') {
+							buffer.Append(current);
+							current = Next();
+						}
+						else if (current == '+') {
+							buffer.Append(current);
+							current = Next();
+						}
+						continue;
+					}
+					break;
+				}
+				buffer.Append(current);
+				current = Next();
+			}
+
+
+			if (isScientic) {
+				AddToken(TokenType.DOUBLE, Double.Parse(buffer.ToString(), System.Globalization.NumberStyles.Any).ToString());
+			}
+			else {
+				String val = buffer.ToString();
+				if(val.Contains(".")) {
+					AddToken(TokenType.DOUBLE, val);
+				} else {
+					AddToken(TokenType.INT, val);
+				}
+			}
+		}
+
 		private void Tabs() {
 			this.line++;
 			if (this.tokens.Count > 0) {
@@ -217,6 +275,19 @@ namespace Lumen.Tomen {
 			String word = buffer.ToString();
 
 			switch (word) {
+				case "inf":
+					AddToken(TokenType.INF, word);
+					break;
+				case "nan":
+					AddToken(TokenType.NAN, word);
+					break;
+				case "true":
+					AddToken(TokenType.TRUE, word);
+					break;
+				case "false":
+					AddToken(TokenType.FALSE, word);
+					break;
+
 				default:
 					AddToken(TokenType.NAME, word);
 					break;
@@ -293,7 +364,7 @@ namespace Lumen.Tomen {
 		}
 
 		internal static Boolean IsValidId(String id) {
-			if (Regex.IsMatch(id, "\\w[\\w\\d\\._]*")) {
+			if (Regex.IsMatch(id, "^[A-Za-z][A-Za-z0-9._]*$")) {
 				return true;
 			}
 
