@@ -39,6 +39,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ITomenKey.cs" />
     <Compile Include="ITomenValue.cs" />
     <Compile Include="Parser\Lexer.cs" />
     <Compile Include="Parser\Parser.cs" />
@@ -49,6 +50,7 @@
     <Compile Include="TomenNull.cs" />
     <Compile Include="TomenString.cs" />
     <Compile Include="TomenTable.cs" />
+    <Compile Include="TomlTableKey.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

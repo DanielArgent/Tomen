@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 using Lumen.Tomen;
 
@@ -11,6 +9,7 @@ namespace Test.Tomen {
 			Console.WriteLine(Test1());
 			Console.WriteLine(Test2());
 			Console.WriteLine(Test3());
+			Console.WriteLine(Test4());
 
 			Console.ReadKey();
 		}
@@ -65,6 +64,13 @@ namespace Test.Tomen {
 			}
 
 			return false;
+		}
+
+		private static Boolean Test4() {
+			TomenTable table = Lumen.Tomen.Tomen.ReadFile("data4.toml");
+
+			
+			return true;
 		}
 	}
 }

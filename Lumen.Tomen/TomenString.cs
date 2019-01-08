@@ -2,7 +2,7 @@
 
 namespace Lumen.Tomen {
 	/// <summary> Tomen string </summary>
-	public class TomenString : ITomenValue {
+	public class TomenString : ITomenValue, ITomenKey {
 		public String Value { get; set; }
 
 		/// <summary> Creates a Tomen string from System.String </summary>
