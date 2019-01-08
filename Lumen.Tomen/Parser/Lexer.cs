@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace Lumen.Tomen {
 	internal sealed class Lexer {
@@ -10,6 +11,7 @@ namespace Lumen.Tomen {
 			["="] = new Token(TokenType.ASSIGNMENT, "="),
 			["["] = new Token(TokenType.LBRACKET, "["),
 			["]"] = new Token(TokenType.RBRACKET, "]"),
+			["."] = new Token(TokenType.DOT, "."),
 		};
 		private readonly String source;
 		private readonly Int32 length;
@@ -27,7 +29,7 @@ namespace Lumen.Tomen {
 			this.line = 1;
 		}
 
-		public List<Token> Tokenization() {
+		internal List<Token> Tokenization() {
 			while (this.position < this.length) {
 				Char current = Peek(0);
 
@@ -288,6 +290,14 @@ namespace Lumen.Tomen {
 
 		private void AddToken(TokenType type, String text) {
 			this.tokens.Add(new Token(type, text, this.line));
+		}
+
+		internal static Boolean IsValidId(String id) {
+			if (Regex.IsMatch(id, "\\w[\\w\\d\\._]*")) {
+				return true;
+			}
+
+			return false;
 		}
 	}
 }

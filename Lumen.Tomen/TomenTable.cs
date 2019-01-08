@@ -17,6 +17,10 @@ namespace Lumen.Tomen {
 			this.pairs = new Dictionary<String, ITomenValue>();
 		}
 
+		public Boolean Contains(String key) {
+			return this.pairs.ContainsKey(key);
+		}
+
 		public override String ToString() {
 			StringBuilder result = new StringBuilder();
 
@@ -29,7 +33,11 @@ namespace Lumen.Tomen {
 					result.Append($"{Environment.NewLine}{i.Value}{Environment.NewLine}");
 				}
 				else {
-					result.Append($"{i.Key} = {i.Value}{Environment.NewLine}");
+					if (Lexer.IsValidId(i.Key)) {
+						result.Append($"{i.Key} = {i.Value}{Environment.NewLine}");
+					} else {
+						result.Append($"\"{i.Key.Replace("\"", "\\\"")}\" = {i.Value}{Environment.NewLine}");
+					}
 				}
 			}
 

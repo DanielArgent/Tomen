@@ -17,27 +17,78 @@ namespace Lumen.Tomen {
 			this.line = 0;
 		}
 
-		internal ITomenValue Parsing() {
-			TomenTable root = new TomenTable(null);
+		internal TomenTable Parsing(TomenTable table=null) {
+			if (table == null) {
+				table = new TomenTable(null);
+			}
 
 			while (!LookMatch(0, TokenType.EOF)) {
 				if (LookMatch(0, TokenType.NAME)) {
 					String name = Consume(TokenType.NAME).Text;
+					if (Match(TokenType.DOT)) {
+
+						TomenTable t;
+						if (table.Contains(name)) {
+							t = table[name] as TomenTable;
+						}
+						else {
+							t = new TomenTable(name);
+							table[name] = t;
+						}
+
+						name = GetId();
+						if (Match(TokenType.ASSIGNMENT)) {
+							ITomenValue value = Expression();
+							t[name] = value;
+						}
+
+						while (Match(TokenType.DOT)) {
+							if (t.Contains(name)) {
+								t = t[name] as TomenTable;
+							}
+							else {
+								t[name] = new TomenTable(name);
+								t = t[name] as TomenTable;
+							}
+							name = GetId();
+							if (Match(TokenType.ASSIGNMENT)) {
+								ITomenValue value = Expression();
+								t[name] = value;
+							}
+						}
+						continue;
+					}
+					else {
+						Match(TokenType.ASSIGNMENT);
+						ITomenValue value = Expression();
+						table[name] = value;
+					}
+				}
+				else if (LookMatch(0, TokenType.TEXT)) {
+					String name = Consume(TokenType.TEXT).Text;
 					Match(TokenType.ASSIGNMENT);
 					ITomenValue value = Expression();
-					root[name] = value;
+					table[name] = value;
 				}
 			}
 
-			return root;
+			return table;
 		}
 
 		private ITomenValue Expression() {
-			if(LookMatch(0, TokenType.TEXT)) {
+			if (LookMatch(0, TokenType.TEXT)) {
 				return new TomenString(Consume(TokenType.TEXT).Text);
 			}
 
 			return TomenNull.NULL;
+		}
+
+		private String GetId() {
+			if (LookMatch(0, TokenType.TEXT)) {
+				return Consume(TokenType.TEXT).Text;
+			}
+
+			return Consume(TokenType.NAME).Text;
 		}
 
 		private Boolean Match(TokenType type) {

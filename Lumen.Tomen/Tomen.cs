@@ -7,7 +7,7 @@ namespace Lumen.Tomen {
 		/// <summary> Reads file into Tomen object </summary>
 		/// <param name="path">Path to file</param>
 		/// <returns> Root table </returns>
-		public static ITomenValue ReadFile(String path) {
+		public static TomenTable ReadFile(String path) {
 			return new Parser(new Lexer(File.ReadAllText(path), path).Tokenization(), path).Parsing();
 		}
 

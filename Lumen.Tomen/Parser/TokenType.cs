@@ -9,6 +9,7 @@ namespace Lumen.Tomen {
 		RBRACKET,
 
 		ASSIGNMENT,
-		EOF
+		EOF,
+		DOT
 	}
 }
