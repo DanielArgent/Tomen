@@ -22,59 +22,68 @@ namespace Lumen.Tomen {
 				table = new TomlTable(null);
 			}
 
-			while (!LookMatch(0, TokenType.EOF)) {
-				if (LookMatch(0, TokenType.NAME) || LookMatch(0, TokenType.TEXT)) {
-					ITomenKey name = GetId();
-					if (Match(TokenType.DOT)) {
-
+			while (!this.LookMatch(0, TokenType.EOF)) {
+				// name || "text "
+				if (this.LookMatch(0, TokenType.NAME) || this.LookMatch(0, TokenType.TEXT)) {
+					String name = this.GetId();
+					// // name || "text " .
+					if (this.Match(TokenType.DOT)) {
 						TomlTable t;
-						if (table.Contains(name.Value)) {
-							t = table[name] as TomlTable;
+						if (table.Contains(name)) {
+							t = table[name] as TomlTable; // if it's not table?
 						}
 						else {
-							t = new TomlTable(name.Value);
+							t = new TomlTable(name);
 							table[name] = t;
 						}
 
-						name = GetId();
-						if (Match(TokenType.ASSIGNMENT)) {
-							ITomlValue value = Expression();
+						name = this.GetId();
+						if (this.Match(TokenType.ASSIGNMENT)) {
+							ITomlValue value = this.Expression();
 							t[name] = value;
 						}
 
-						while (Match(TokenType.DOT)) {
-							if (t.Contains(name.Value)) {
+						while (this.Match(TokenType.DOT)) {
+							if (t.Contains(name)) {
 								t = t[name] as TomlTable;
 							}
 							else {
-								t[name] = new TomlTable(name.Value);
+								t[name] = new TomlTable(name);
 								t = t[name] as TomlTable;
 							}
-							name = GetId();
-							if (Match(TokenType.ASSIGNMENT)) {
-								ITomlValue value = Expression();
+							name = this.GetId();
+							if (this.Match(TokenType.ASSIGNMENT)) {
+								ITomlValue value = this.Expression();
 								t[name] = value;
 							}
 						}
 						continue;
 					}
 					else {
-						Match(TokenType.ASSIGNMENT);
-						ITomlValue value = Expression();
+						this.Match(TokenType.ASSIGNMENT);
+						ITomlValue value = this.Expression();
 						table[name] = value;
 					}
 				}
 
-				if (LookMatch(0, TokenType.LBRACKET) && table.Name != null) {
+				if (this.LookMatch(0, TokenType.LBRACKET) && table.Name != null) {
 					return table;
 				}
 
-				if (Match(TokenType.LBRACKET)) {
-					ITomenKey key = GetId();
-					Match(TokenType.RBRACKET);
+				if (this.Match(TokenType.LBRACKET)) {
+					String name = this.GetId();
+					this.Match(TokenType.RBRACKET);
 
-					table[key.Value] = new TomlTable(key.Value);
-					Parsing(table[key.Value] as TomlTable);
+					TomlTable t;
+					if (table.Contains(name)) {
+						t = table[name] as TomlTable;
+					}
+					else {
+						t = new TomlTable(name);
+						table[name] = t;
+					}
+
+					this.Parsing(t);
 				}
 			}
 
@@ -82,13 +91,13 @@ namespace Lumen.Tomen {
 		}
 
 		private ITomlValue Expression() {
-			if (Match(TokenType.PLUS)) {
-				ITomlValue value = Expression();
+			if (this.Match(TokenType.PLUS)) {
+				ITomlValue value = this.Expression();
 				return value;
 			}
 
-			if (Match(TokenType.MINUS)) {
-				ITomlValue value = Expression();
+			if (this.Match(TokenType.MINUS)) {
+				ITomlValue value = this.Expression();
 
 				if (value is TomlInt ti) {
 					return new TomlInt(-ti.Value);
@@ -101,41 +110,41 @@ namespace Lumen.Tomen {
 				return value;
 			}
 
-			if (LookMatch(0, TokenType.TEXT)) {
-				return new TomlString(Consume(TokenType.TEXT).Text);
+			if (this.LookMatch(0, TokenType.TEXT)) {
+				return new TomlString(this.Consume(TokenType.TEXT).Text);
 			}
 
-			if (LookMatch(0, TokenType.INT)) {
-				var z = Consume(TokenType.INT).Text;
+			if (this.LookMatch(0, TokenType.INT)) {
+				var z = this.Consume(TokenType.INT).Text;
 				return new TomlInt(Int64.Parse(z, System.Globalization.NumberStyles.Any));
 			}
 
-			if (LookMatch(0, TokenType.DOUBLE)) {
-				var z = Consume(TokenType.DOUBLE).Text;
+			if (this.LookMatch(0, TokenType.DOUBLE)) {
+				var z = this.Consume(TokenType.DOUBLE).Text;
 				return new TomlDouble(Double.Parse(z, System.Globalization.CultureInfo.InvariantCulture));
 			}
 
-			if (Match(TokenType.INF)) {
+			if (this.Match(TokenType.INF)) {
 				return new TomlDouble(Double.PositiveInfinity);
 			}
 
-			if (Match(TokenType.NAN)) {
+			if (this.Match(TokenType.NAN)) {
 				return new TomlDouble(Double.NaN);
 			}
 
-			if (Match(TokenType.TRUE)) {
+			if (this.Match(TokenType.TRUE)) {
 				return new TomlBool(true);
 			}
 
-			if (Match(TokenType.FALSE)) {
+			if (this.Match(TokenType.FALSE)) {
 				return new TomlBool(false);
 			}
 
-			if (Match(TokenType.LBRACKET)) {
+			if (this.Match(TokenType.LBRACKET)) {
 				List<ITomlValue> items = new List<ITomlValue>();
-				while (!Match(TokenType.RBRACKET)) {
-					items.Add(Expression());
-					Match(TokenType.SPLIT);
+				while (!this.Match(TokenType.RBRACKET)) {
+					items.Add(this.Expression());
+					this.Match(TokenType.SPLIT);
 				}
 				return new TomlArray(items);
 			}
@@ -143,16 +152,16 @@ namespace Lumen.Tomen {
 			return TomlNull.NULL;
 		}
 
-		private ITomenKey GetId() {
-			if (LookMatch(0, TokenType.TEXT)) {
-				return new QuotedKey(Consume(TokenType.TEXT).Text);
+		private String GetId() {
+			if (this.LookMatch(0, TokenType.TEXT)) {
+				return this.Consume(TokenType.TEXT).Text;
 			}
 
-			return new TomlString(Consume(TokenType.NAME).Text);
+			return this.Consume(TokenType.NAME).Text;
 		}
 
 		private Boolean Match(TokenType type) {
-			Token current = GetToken(0);
+			Token current = this.GetToken(0);
 
 			if (type != current.Type) {
 				return false;
@@ -164,7 +173,7 @@ namespace Lumen.Tomen {
 		}
 
 		private Boolean LookMatch(Int32 pos, TokenType type) {
-			return GetToken(pos).Type == type;
+			return this.GetToken(pos).Type == type;
 		}
 
 		private Token GetToken(Int32 NewPosition) {
@@ -178,7 +187,7 @@ namespace Lumen.Tomen {
 		}
 
 		private Token Consume(TokenType type) {
-			Token Current = GetToken(0);
+			Token Current = this.GetToken(0);
 			this.line = Current.Line;
 
 			if (type != Current.Type) {

@@ -1,5 +1,7 @@
 ﻿name = "lumen"
 
+nums."7" = 9
+
 [nums]
 num1 = 5
 num2 = 8.5

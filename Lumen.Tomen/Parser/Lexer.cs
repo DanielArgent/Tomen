@@ -6,7 +6,6 @@ using System.Text.RegularExpressions;
 namespace Lumen.Tomen {
 	internal sealed class Lexer {
 		private const String operatorsString = "+-\\*/%(){}=<>!&|;:?,[]^.@~#";
-		private const String validSymbols = "0123456789abcdef";
 		private static IDictionary<String, Token> operatorsDictionary = new Dictionary<String, Token>() {
 			["="] = new Token(TokenType.ASSIGNMENT, "="),
 			["["] = new Token(TokenType.LBRACKET, "["),
@@ -34,25 +33,25 @@ namespace Lumen.Tomen {
 
 		internal List<Token> Tokenization() {
 			while (this.position < this.length) {
-				Char current = Peek(0);
+				Char current = this.Peek(0);
 
 				if (Char.IsDigit(current)) {
-					Number();
+					this.Number();
 				}
 				else if (current == '"') {
-					String();
+					this.String();
 				}
 				else if (Char.IsLetter(current) || current == '_' || current == '$') {
-					Word();
+					this.Word();
 				}
 				else if (operatorsString.IndexOf(current) != -1) {
-					Operator();
+					this.Operator();
 				}
 				else if (current == '\n') {
-					Tabs();
+					this.Tabs();
 				}
 				else {
-					Next();
+					this.Next();
 				}
 			}
 
@@ -60,138 +59,95 @@ namespace Lumen.Tomen {
 		}
 
 		private void String() {
-			Next();
+			Int32 line = this.line; // remember position
+
+			this.Next();
+
+			Boolean isMultiline = false;
+			if(this.Peek(0) == '"' && this.Peek(1) == '"') {
+				this.Next();
+				this.Next();
+				isMultiline = true;
+			}
 
 			StringBuilder builder = new StringBuilder();
-
-			Int32 x = 0;
-
-			Char current = Peek(0);
-
-			List<String> substitutes = new List<String>();
+			Char current = this.Peek(0);
 
 			while (true) {
 				if (current == '\\') {
-					current = Next();
+					current = this.Next();
 					switch (current) {
-						case '#':
-							current = Next();
-							builder.Append('#');
-							continue;
 						case '"':
-							current = Next();
+							current = this.Next();
 							builder.Append('"');
 							continue;
+
 						case '\r':
-							Next();
-							current = Next();
+							this.Next();
+							current = this.Next();
 							continue;
+						case '\n':
+							current = this.Next();
+							continue;
+
 						case 'f':
-							current = Next();
+							current = this.Next();
 							builder.Append('\f');
 							continue;
 						case '\\':
-							current = Next();
+							current = this.Next();
 							builder.Append('\\');
 							continue;
-						case '0':
-							current = Next();
-							builder.Append('\0');
-							continue;
-						case 'a':
-							current = Next();
-							builder.Append('\a');
-							continue;
 						case 'b':
-							current = Next();
+							current = this.Next();
 							builder.Append('\b');
 							continue;
 						case 'r':
-							current = Next();
+							current = this.Next();
 							builder.Append('\r');
 							continue;
-						case 'v':
-							current = Next();
-							builder.Append('\v');
-							continue;
-						case 'e':
-							current = Next();
-							builder.Append(Environment.NewLine);
-							continue;
 						case 'n':
-							current = Next();
+							current = this.Next();
 							builder.Append('\n');
 							continue;
 						case 't':
-							current = Next();
+							current = this.Next();
 							builder.Append('\t');
 							continue;
+
 						default:
 							builder.Append('\\');
 							continue;
 					}
 				}
 
-				if (current == '{') {
-					current = Next();
-					builder.Append("{{");
-				}
-
-				if (current == '}') {
-					current = Next();
-					builder.Append("}}");
-				}
-
-				if (current == '#') {
-					current = Next();
-
-					if (current == '"') {
-						builder.Append('#');
-						break;
-					}
-
-					StringBuilder buffer = new StringBuilder();
-					String s = buffer.ToString();
-					Int32 position = substitutes.IndexOf(s);
-
-					if (position == -1) {
-						substitutes.Add(s);
-						//if(builder.ToString().EndsWith("}"))
-						//	builder.Append("\b ");
-						builder.Append($"{{{x}}}");
-						x++;
-					}
-					else {
-						builder.Append($"{{{position}}}");
-					}
-					continue;
-				}
-
-				if (current == '"') {
+				if (!isMultiline && current == '"') {
 					break;
 				}
 
-				CheckOutOfRange();
+				if(isMultiline && current == '"' && this.Peek(1) == '"' && this.Peek(2) == '"') {
+					Next();
+					Next();
+					break;
+				}
+
+				if (this.position >= this.length) {
+					throw new TomlParsingException($"unclosed{(isMultiline ? " mutiline " : " ")}string literal", file, line);
+				}
 
 				builder.Append(current);
 
-				current = Next();
+				current = this.Next();
 			}
 
-			current = Next();
+			this.Next();
 
-			AddToken(TokenType.TEXT, builder.ToString());
-		}
-
-		private void CheckOutOfRange() {
-			if (this.position >= this.length) {
-				throw new Exception("consumed symbol '\"'");
-			}
+			this.AddToken(TokenType.TEXT, builder.ToString());
 		}
 
 		private void Number() {
 			StringBuilder buffer = new StringBuilder();
-			Char current = Peek(0);
+			Char current = this.Peek(0);
 
 			Boolean isScientic = false;
 
@@ -203,40 +159,40 @@ namespace Lumen.Tomen {
 					}
 				}
 				else if (current == '_') {
-					current = Next();
+					current = this.Next();
 					continue;
 				}
 				else if (!Char.IsDigit(current)) {
 					if (current == 'e') {
 						isScientic = true;
 						buffer.Append(current);
-						current = Next();
+						current = this.Next();
 						if (current == '-') {
 							buffer.Append(current);
-							current = Next();
+							current = this.Next();
 						}
 						else if (current == '+') {
 							buffer.Append(current);
-							current = Next();
+							current = this.Next();
 						}
 						continue;
 					}
 					break;
 				}
 				buffer.Append(current);
-				current = Next();
+				current = this.Next();
 			}
 
 
 			if (isScientic) {
-				AddToken(TokenType.DOUBLE, Double.Parse(buffer.ToString(), System.Globalization.NumberStyles.Any).ToString());
+				this.AddToken(TokenType.DOUBLE, Double.Parse(buffer.ToString(), System.Globalization.NumberStyles.Any).ToString());
 			}
 			else {
 				String val = buffer.ToString();
 				if(val.Contains(".")) {
-					AddToken(TokenType.DOUBLE, val);
+					this.AddToken(TokenType.DOUBLE, val);
 				} else {
-					AddToken(TokenType.INT, val);
+					this.AddToken(TokenType.INT, val);
 				}
 			}
 		}
@@ -244,14 +200,14 @@ namespace Lumen.Tomen {
 		private void Tabs() {
 			this.line++;
 			if (this.tokens.Count > 0) {
-				Char current = Next();
+				Char current = this.Next();
 
 				while (Char.IsWhiteSpace(current)) {
 					if (current == '\n') {
 						this.line++;
 					}
 
-					current = Next();
+					current = this.Next();
 				}
 			}
 		}
@@ -259,7 +215,7 @@ namespace Lumen.Tomen {
 		private void Word() {
 			StringBuilder buffer = new StringBuilder();
 
-			Char current = Peek(0);
+			Char current = this.Peek(0);
 
 			while (true) {
 				if (!Char.IsLetterOrDigit(current)
@@ -269,58 +225,58 @@ namespace Lumen.Tomen {
 
 				buffer.Append(current);
 
-				current = Next();
+				current = this.Next();
 			}
 
 			String word = buffer.ToString();
 
 			switch (word) {
 				case "inf":
-					AddToken(TokenType.INF, word);
+					this.AddToken(TokenType.INF, word);
 					break;
 				case "nan":
-					AddToken(TokenType.NAN, word);
+					this.AddToken(TokenType.NAN, word);
 					break;
 				case "true":
-					AddToken(TokenType.TRUE, word);
+					this.AddToken(TokenType.TRUE, word);
 					break;
 				case "false":
-					AddToken(TokenType.FALSE, word);
+					this.AddToken(TokenType.FALSE, word);
 					break;
 
 				default:
-					AddToken(TokenType.NAME, word);
+					this.AddToken(TokenType.NAME, word);
 					break;
 			}
 		}
 
 		private void Operator() {
 			// Берём текущий символ.
-			Char current = Peek(0);
+			Char current = this.Peek(0);
 
 			// Комменты.
 			if (current == '#') {
-				Next();
-				Comment();
+				this.Next();
+				this.Comment();
 				return;
 			}
 
 			// А тут у нас собираются операторы.
 			StringBuilder buffer = new StringBuilder(current + "");
-			current = Next();
+			current = this.Next();
 
 			while (true) {
 				if (!operatorsDictionary.ContainsKey(buffer.ToString() + current)) {
-					AddToken(operatorsDictionary[buffer.ToString()]);
+					this.AddToken(operatorsDictionary[buffer.ToString()]);
 					return;
 				}
 				buffer.Append(current);
-				current = Next();
+				current = this.Next();
 			}
 		}
 
 		private void Comment() {
-			Char current = Peek(0);
+			Char current = this.Peek(0);
 
 			StringBuilder sb = new StringBuilder();
 
@@ -328,16 +284,16 @@ namespace Lumen.Tomen {
 				if ("\r\n\0".IndexOf(current) != -1) {
 					break;
 				}
-				current = Next();
+				current = this.Next();
 				sb.Append(current);
 			}
 
-			Next();
+			this.Next();
 		}
 
 		private Char Next() {
 			this.position++;
-			return Peek(0);
+			return this.Peek(0);
 		}
 
 		private Char Peek(Int32 relativePosition) {
@@ -356,7 +312,7 @@ namespace Lumen.Tomen {
 		}
 
 		private void AddToken(TokenType type) {
-			AddToken(type, "");
+			this.AddToken(type, "");
 		}
 
 		private void AddToken(TokenType type, String text) {
@@ -369,6 +325,18 @@ namespace Lumen.Tomen {
 			}
 
 			return false;
+		}
+
+		public static String NormalizeKey(String s) {
+			if (IsValidId(s)) {
+				return s;
+			}
+
+			return $@"""{s.Replace("\\", "\\\\").Replace("\"", "\\\"").Replace("\r", "\\r").Replace("\f", "\\f").Replace("\t", "\\t").Replace("\n", "\\n").Replace("\b", "\\b").Replace(Environment.NewLine, "\\r\\n")}""";
+		}
+
+		public static String Normalize(String s) {
+			return $@"""{s.Replace("\\", "\\\\").Replace("\"", "\\\"").Replace("\r", "\\r").Replace("\f", "\\f").Replace("\t", "\\t").Replace("\n", "\\n").Replace("\b", "\\b").Replace(Environment.NewLine, "\\r\\n")}""";
 		}
 	}
 }

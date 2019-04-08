@@ -39,22 +39,21 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ITomenKey.cs" />
-    <Compile Include="ITomlValue.cs" />
+    <Compile Include="Parser\TomlParsingException.cs" />
+    <Compile Include="Values\ITomlValue.cs" />
     <Compile Include="Parser\Lexer.cs" />
     <Compile Include="Parser\Parser.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Parser\Token.cs" />
     <Compile Include="Parser\TokenType.cs" />
     <Compile Include="Tomen.cs" />
-    <Compile Include="TomlArray.cs" />
-    <Compile Include="TomlNull.cs" />
-    <Compile Include="TomlString.cs" />
-    <Compile Include="TomlTable.cs" />
-    <Compile Include="TomlDouble.cs" />
-    <Compile Include="TomlBool.cs" />
-    <Compile Include="TomlInt.cs" />
-    <Compile Include="TomlTableKey.cs" />
+    <Compile Include="Values\TomlArray.cs" />
+    <Compile Include="Values\TomlNull.cs" />
+    <Compile Include="Values\TomlString.cs" />
+    <Compile Include="Values\TomlTable.cs" />
+    <Compile Include="Values\TomlDouble.cs" />
+    <Compile Include="Values\TomlBool.cs" />
+    <Compile Include="Values\TomlInt.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

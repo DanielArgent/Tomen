@@ -1,14 +1,13 @@
 ﻿using System;
-using System.Linq;
 
 using Lumen.Tomen;
 
 namespace Test.Tomen {
 	internal static class Program {
 		internal static void Main(String[] args) {
-			/*Console.WriteLine(Test1());
+			Console.WriteLine(Test1());
 			Console.WriteLine(Test2());
-			Console.WriteLine(Test3());*/
+			Console.WriteLine(Test3());
 			Console.WriteLine(Test4());
 
 			Console.ReadKey();
@@ -30,6 +29,8 @@ namespace Test.Tomen {
 
 		private static Boolean Test2() {
 			TomlTable table = Lumen.Tomen.Tomen.ReadFile("data2.toml");
+
+			Console.WriteLine((table["str"] as TomlString).Value);
 
 			return table.Contains("invalid key");
 		}

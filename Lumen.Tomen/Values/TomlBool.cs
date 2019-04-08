@@ -1,7 +1,9 @@
 ﻿using System;
 
-namespace Lumen.Tomen {
+namespace Lumen.Tomen { 
+	/// <summary> Toml logical value (true or false) </summary>
 	public class TomlBool : ITomlValue {
+		/// <summary> Internal value </summary>
 		public Boolean Value { get; }
 
 		public TomlBool(Boolean value) {
