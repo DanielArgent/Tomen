@@ -1,10 +1,10 @@
 ﻿name = "lumen"
 
-nums."7" = 9
-
 [nums]
 num1 = 5
 num2 = 8.5
+
+[objects]
 
 [bools]
 x = true
@@ -12,3 +12,6 @@ y = false
 
 [array]
 m1 = [5, 3, 7, 7, -inf]
+
+t1.v1.i2 = "t1.v1.i2"
+t1."43"."k" = "t1.43.k"

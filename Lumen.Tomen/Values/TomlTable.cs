@@ -5,7 +5,7 @@ using System.Collections.Generic;
 
 namespace Lumen.Tomen {
 	public class TomlTable : ITomlValue {
-		private readonly Dictionary<String, ITomlValue> pairs;
+		internal readonly Dictionary<String, ITomlValue> pairs;
 		public String Name { get; }
 
 		public ITomlValue this[String name] {

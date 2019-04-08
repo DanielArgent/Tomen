@@ -1,5 +1,10 @@
 ﻿"invalid key" = "value"
 
-str = """
+str = """\
 	VEEERY STRANGE STR
 """
+
+strl = 'dsf'
+newStr = '''
+sad
+'''

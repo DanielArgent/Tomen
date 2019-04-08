@@ -41,6 +41,9 @@ namespace Lumen.Tomen {
 				else if (current == '"') {
 					this.String();
 				}
+				else if (current == '\'') {
+					this.LiteralString();
+				}
 				else if (Char.IsLetter(current) || current == '_' || current == '$') {
 					this.Word();
 				}
@@ -126,6 +129,46 @@ namespace Lumen.Tomen {
 				}
 
 				if(isMultiline && current == '"' && this.Peek(1) == '"' && this.Peek(2) == '"') {
+					Next();
+					Next();
+					break;
+				}
+
+				if (this.position >= this.length) {
+					throw new TomlParsingException($"unclosed{(isMultiline ? " mutiline " : " ")}string literal", file, line);
+				}
+
+				builder.Append(current);
+
+				current = this.Next();
+			}
+
+			this.Next();
+
+			this.AddToken(TokenType.TEXT, builder.ToString());
+		}
+
+		private void LiteralString() {
+			Int32 line = this.line; // remember position
+
+			this.Next();
+
+			Boolean isMultiline = false;
+			if (this.Peek(0) == '\'' && this.Peek(1) == '\'') {
+				this.Next();
+				this.Next();
+				isMultiline = true;
+			}
+
+			StringBuilder builder = new StringBuilder();
+			Char current = this.Peek(0);
+
+			while (true) {
+				if (!isMultiline && current == '\'') {
+					break;
+				}
+
+				if (isMultiline && current == '\'' && this.Peek(1) == '\'' && this.Peek(2) == '\'') {
 					Next();
 					Next();
 					break;
@@ -251,18 +294,16 @@ namespace Lumen.Tomen {
 		}
 
 		private void Operator() {
-			// Берём текущий символ.
 			Char current = this.Peek(0);
 
-			// Комменты.
+			// Comments
 			if (current == '#') {
 				this.Next();
 				this.Comment();
 				return;
 			}
 
-			// А тут у нас собираются операторы.
-			StringBuilder buffer = new StringBuilder(current + "");
+			StringBuilder buffer = new StringBuilder(current.ToString());
 			current = this.Next();
 
 			while (true) {
@@ -297,7 +338,6 @@ namespace Lumen.Tomen {
 		}
 
 		private Char Peek(Int32 relativePosition) {
-			// Да  нет-нет.
 			Int32 position = this.position + relativePosition;
 			if (position >= this.length) {
 				return '\0';

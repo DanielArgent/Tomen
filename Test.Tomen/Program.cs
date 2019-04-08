@@ -31,6 +31,8 @@ namespace Test.Tomen {
 			TomlTable table = Lumen.Tomen.Tomen.ReadFile("data2.toml");
 
 			Console.WriteLine((table["str"] as TomlString).Value);
+			Console.WriteLine((table["strl"] as TomlString).Value);
+			Console.WriteLine((table["newStr"] as TomlString).Value);
 
 			return table.Contains("invalid key");
 		}
@@ -68,10 +70,15 @@ namespace Test.Tomen {
 		}
 
 		private static Boolean Test4() {
-			TomlTable table = Lumen.Tomen.Tomen.ReadFile("data4.toml");
+			TomlTable myTable = new TomlTable(null) {
+				["x"] = new TomlInt(5),
+				["y"] = new TomlInt(6)
+			};
 
-			Lumen.Tomen.Tomen.WriteFile("data4p.toml", table);
-			
+			Lumen.Tomen.Tomen.WriteFile("x.toml", myTable);
+
+			Lumen.Tomen.Tomen.ToXml(myTable, "x.xml");
+
 			return true;
 		}
 	}
