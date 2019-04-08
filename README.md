@@ -1,2 +1,4 @@
 # Tomen
-Toml parser for .NET
+Toml parser for .NET.
+
+For more information please visit https://danielargent.github.io/tomen
