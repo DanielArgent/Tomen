@@ -2,7 +2,7 @@
 using System.IO;
 using System.Xml;
 
-namespace Lumen.Tomen {
+namespace Tomen {
 	/// <summary> Main Tomen class </summary>
 	public static class Tomen {
 		/// <summary> Reads file into TomlTable </summary>

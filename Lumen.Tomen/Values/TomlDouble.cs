@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Lumen.Tomen {
+namespace Tomen {
 	/// <summary> Toml double value </summary>
 	public class TomlDouble : ITomlValue {
 		/// <summary> Internal value </summary>

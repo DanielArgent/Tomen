@@ -3,7 +3,7 @@ using System.Text;
 using System.Linq;
 using System.Collections.Generic;
 
-namespace Lumen.Tomen {
+namespace Tomen {
 	public class TomlTable : ITomlValue {
 		internal readonly Dictionary<String, ITomlValue> pairs;
 		public String Name { get; }

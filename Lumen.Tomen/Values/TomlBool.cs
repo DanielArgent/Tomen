@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Lumen.Tomen { 
+namespace Tomen { 
 	/// <summary> Toml logical value (true or false) </summary>
 	public class TomlBool : ITomlValue {
 		/// <summary> Internal value </summary>

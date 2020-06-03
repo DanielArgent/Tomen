@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Lumen.Tomen {
+namespace Tomen {
 	internal sealed class Parser {
 		private readonly List<Token> tokens;
 		private readonly Int32 size;

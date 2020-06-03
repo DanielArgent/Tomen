@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Lumen.Tomen {
+namespace Tomen {
 	/// <summary> Toml integer value </summary>
 	public class TomlInt : ITomlValue {
 		public Int64 Value { get; }

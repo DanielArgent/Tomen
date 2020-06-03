@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Text.RegularExpressions;
 
-namespace Lumen.Tomen {
+namespace Tomen {
 	internal sealed class Lexer {
 		private const String operatorsString = "+-\\*/%(){}=<>!&|;:?,[]^.@~#";
 		private static IDictionary<String, Token> operatorsDictionary = new Dictionary<String, Token>() {

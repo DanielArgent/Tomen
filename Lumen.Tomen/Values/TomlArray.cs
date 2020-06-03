@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace Lumen.Tomen {
+namespace Tomen {
 	/// <summary> Toml array object </summary>
 	public class TomlArray : ITomlValue {
 		/// <summary> Values of array </summary>

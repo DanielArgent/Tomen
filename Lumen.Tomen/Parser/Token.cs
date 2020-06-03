@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Lumen.Tomen {
+namespace Tomen {
 	internal class Token {
 		internal TokenType Type { get; set; }
 		internal String Text { get; set; }

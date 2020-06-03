@@ -44,9 +44,9 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Lumen.Tomen\Lumen.Tomen.csproj">
+    <ProjectReference Include="..\Lumen.Tomen\Tomen.csproj">
       <Project>{cc3d5b28-2443-42fb-8857-588862f0fa78}</Project>
-      <Name>Lumen.Tomen</Name>
+      <Name>Tomen</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

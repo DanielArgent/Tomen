@@ -1,6 +1,6 @@
 ﻿using System;
 
-using Lumen.Tomen;
+using Tomen;
 
 namespace Test.Tomen {
 	internal static class Program {
@@ -14,7 +14,7 @@ namespace Test.Tomen {
 		}
 
 		private static Boolean Test1() {
-			TomlTable table = Lumen.Tomen.Tomen.ReadFile("data1.toml");
+			TomlTable table = global::Tomen.Tomen.ReadFile("data1.toml");
 
 			if (table.Contains("key")) {
 				ITomlValue value = table["key"];
@@ -28,7 +28,7 @@ namespace Test.Tomen {
 		}
 
 		private static Boolean Test2() {
-			TomlTable table = Lumen.Tomen.Tomen.ReadFile("data2.toml");
+			TomlTable table = global::Tomen.Tomen.ReadFile("data2.toml");
 
 			Console.WriteLine((table["str"] as TomlString).Value);
 			Console.WriteLine((table["strl"] as TomlString).Value);
@@ -38,7 +38,7 @@ namespace Test.Tomen {
 		}
 
 		private static Boolean Test3() {
-			TomlTable table = Lumen.Tomen.Tomen.ReadFile("data3.toml");
+			TomlTable table = global::Tomen.Tomen.ReadFile("data3.toml");
 
 			if (table.Contains("t")) {
 				ITomlValue value = table["t"];
@@ -75,9 +75,9 @@ namespace Test.Tomen {
 				["y"] = new TomlInt(6)
 			};
 
-			Lumen.Tomen.Tomen.WriteFile("x.toml", myTable);
+			global::Tomen.Tomen.WriteFile("x.toml", myTable);
 
-			Lumen.Tomen.Tomen.ToXml(myTable, "x.xml");
+			global::Tomen.Tomen.ToXml(myTable, "x.xml");
 
 			return true;
 		}

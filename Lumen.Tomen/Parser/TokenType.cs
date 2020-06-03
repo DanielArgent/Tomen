@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Lumen.Tomen {
+namespace Tomen {
 	internal enum TokenType {
 		NAME,
 		TEXT,
