@@ -115,14 +115,23 @@ namespace Tomen {
 				return new TomlString(this.Consume(TokenType.TEXT).Text);
 			}
 
-			if (this.LookMatch(0, TokenType.INT)) {
-				var z = this.Consume(TokenType.INT).Text;
-				return new TomlInt(Int64.Parse(z, System.Globalization.NumberStyles.Any));
-			}
+			if (this.LookMatch(0, TokenType.BAREKEY)) {
+				String number = this.Consume(TokenType.BAREKEY).Text;
 
-			if (this.LookMatch(0, TokenType.DOUBLE)) {
-				var z = this.Consume(TokenType.DOUBLE).Text;
-				return new TomlDouble(Double.Parse(z, System.Globalization.CultureInfo.InvariantCulture));
+				if(this.Match(TokenType.DOT)) {
+					number += '.';
+
+					if(this.LookMatch(0, TokenType.BAREKEY)) {
+						number += this.Consume(TokenType.BAREKEY).Text;
+					}
+					else {
+						number += '0';
+					}
+
+					return new TomlDouble(Double.Parse(number, System.Globalization.CultureInfo.InvariantCulture));
+				}
+
+				return new TomlInt(Int64.Parse(number, System.Globalization.NumberStyles.Any));
 			}
 
 			if (this.Match(TokenType.INF)) {
@@ -154,8 +163,8 @@ namespace Tomen {
 		}
 
 		private String GetId() {
-			if (this.LookMatch(0, TokenType.NAME)) {
-				return this.Consume(TokenType.NAME).Text;
+			if (this.LookMatch(0, TokenType.BAREKEY)) {
+				return this.Consume(TokenType.BAREKEY).Text;
 			}
 
 			if (this.LookMatch(0, TokenType.TEXT)) {

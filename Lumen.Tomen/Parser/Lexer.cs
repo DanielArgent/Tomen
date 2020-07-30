@@ -37,17 +37,14 @@ namespace Tomen {
 			while (this.position < this.length) {
 				Char current = this.Peek(0);
 
-				if (Char.IsDigit(current)) {
-					this.Number();
-				}
-				else if (current == '"') {
+				if (current == '"') {
 					this.String();
 				}
 				else if (current == '\'') {
 					this.LiteralString();
 				}
-				else if (Char.IsLetter(current) || current == '_' || current == '$') {
-					this.Word();
+				else if (Char.IsLetterOrDigit(current) || current == '_') {
+					this.BareKey();
 				}
 				else if (operatorsString.IndexOf(current) != -1) {
 					this.Operator();
@@ -69,7 +66,7 @@ namespace Tomen {
 			this.Next();
 
 			Boolean isMultiline = false;
-			if(this.Peek(0) == '"' && this.Peek(1) == '"') {
+			if (this.Peek(0) == '"' && this.Peek(1) == '"') {
 				this.Next();
 				this.Next();
 				isMultiline = true;
@@ -86,15 +83,20 @@ namespace Tomen {
 							current = this.Next();
 							builder.Append('"');
 							continue;
-
 						case '\r':
-							this.Next();
-							current = this.Next();
+							if (isMultiline) {
+								if (Environment.NewLine.Length == 2) {
+									this.Next();
+								}
+								current = this.Next();
+							}
 							continue;
 						case '\n':
-							current = this.Next();
+							if (isMultiline) {
+								this.Next();
+								current = this.Next();
+							}
 							continue;
-
 						case 'f':
 							current = this.Next();
 							builder.Append('\f');
@@ -119,25 +121,27 @@ namespace Tomen {
 							current = this.Next();
 							builder.Append('\t');
 							continue;
-
 						default:
-							builder.Append('\\');
-							continue;
+							throw new TomlParsingException("unknown escape sequence", this.file, line);
 					}
+				}
+
+				if (!isMultiline && current == '\n') {
+					throw new TomlParsingException("unclosed string", this.file, line);
 				}
 
 				if (!isMultiline && current == '"') {
 					break;
 				}
 
-				if(isMultiline && current == '"' && this.Peek(1) == '"' && this.Peek(2) == '"') {
+				if (isMultiline && current == '"' && this.Peek(1) == '"' && this.Peek(2) == '"') {
 					Next();
 					Next();
 					break;
 				}
 
 				if (this.position >= this.length) {
-					throw new TomlParsingException($"unclosed{(isMultiline ? " mutiline " : " ")}string literal", file, line);
+					throw new TomlParsingException($"unclosed{(isMultiline ? " mutiline " : " ")}string", file, line);
 				}
 
 				builder.Append(current);
@@ -177,7 +181,7 @@ namespace Tomen {
 				}
 
 				if (this.position >= this.length) {
-					throw new TomlParsingException($"unclosed{(isMultiline ? " mutiline " : " ")}string literal", file, line);
+					throw new TomlParsingException($"unclosed{(isMultiline ? " mutiline " : " ")}literal string", file, line);
 				}
 
 				builder.Append(current);
@@ -190,74 +194,23 @@ namespace Tomen {
 			this.AddToken(TokenType.TEXT, builder.ToString());
 		}
 
-		private void Number() {
-			StringBuilder buffer = new StringBuilder();
-			Char current = this.Peek(0);
-
-			Boolean isScientic = false;
-
-			while (true) {
-				if (current == '.') {
-					if (buffer.ToString().IndexOf('.') != -1) {
-						throw new Exception("Invalid number literal");
-					}
-				}
-				else if (current == '_') {
-					current = this.Next();
-					continue;
-				}
-				else if (!Char.IsDigit(current)) {
-					if (current == 'e') {
-						isScientic = true;
-						buffer.Append(current);
-						current = this.Next();
-						if (current == '-') {
-							buffer.Append(current);
-							current = this.Next();
-						}
-						else if (current == '+') {
-							buffer.Append(current);
-							current = this.Next();
-						}
-						continue;
-					}
-					break;
-				}
-				buffer.Append(current);
-				current = this.Next();
-			}
-
-
-			if (isScientic) {
-				this.AddToken(TokenType.DOUBLE, Double.Parse(buffer.ToString(), System.Globalization.NumberStyles.Any).ToString());
-			}
-			else {
-				String val = buffer.ToString();
-				if(val.Contains(".")) {
-					this.AddToken(TokenType.DOUBLE, val);
-				} else {
-					this.AddToken(TokenType.INT, val);
-				}
-			}
-		}
-
 		private void Tabs() {
 			this.line++;
 			Char current = this.Next();
-			while(Char.IsWhiteSpace(current)) {
+			while (Char.IsWhiteSpace(current)) {
 				current = this.Next();
 			}
 			this.AddToken(TokenType.NL);
 		}
 
-		private void Word() {
+		private void BareKey() {
 			StringBuilder buffer = new StringBuilder();
 
 			Char current = this.Peek(0);
 
 			while (true) {
 				if (!Char.IsLetterOrDigit(current)
-					&& current != '_') {
+					&& current != '_' && current != '-') {
 					break;
 				}
 
@@ -283,7 +236,7 @@ namespace Tomen {
 					break;
 
 				default:
-					this.AddToken(TokenType.NAME, word);
+					this.AddToken(TokenType.BAREKEY, word);
 					break;
 			}
 		}
@@ -354,7 +307,7 @@ namespace Tomen {
 		}
 
 		internal static Boolean IsValidId(String id) {
-			if (Regex.IsMatch(id, "^[A-Za-z][A-Za-z0-9._]*$")) {
+			if (Regex.IsMatch(id, "^[A-Za-z0-9_][A-Za-z0-9_-]*$")) {
 				return true;
 			}
 

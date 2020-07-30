@@ -2,7 +2,7 @@
 
 namespace Tomen {
 	internal enum TokenType {
-		NAME,
+		BAREKEY,
 		TEXT,
 
 		LBRACKET,

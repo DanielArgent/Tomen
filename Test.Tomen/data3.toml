@@ -9,4 +9,6 @@ a = 2
 b = 8
 c = 3
 9 = 3
-5.2 = 3
+5.2 = -3.1415
+fruit.apple.smooth = true
+fruit.orange = 2
