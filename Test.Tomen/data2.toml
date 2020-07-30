@@ -1,5 +1,9 @@
 ﻿"invalid key" = "value"
 
+x = true
+
+5 = 9
+
 str = """\
 	VEEERY STRANGE STR
 """

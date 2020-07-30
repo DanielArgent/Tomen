@@ -10,6 +10,8 @@ namespace Tomen {
 			["="] = new Token(TokenType.ASSIGNMENT, "="),
 			["["] = new Token(TokenType.LBRACKET, "["),
 			["]"] = new Token(TokenType.RBRACKET, "]"),
+			["{"] = new Token(TokenType.LBRACE, "{"),
+			["}"] = new Token(TokenType.RBRACE, "}"),
 			["+"] = new Token(TokenType.PLUS, "+"),
 			["-"] = new Token(TokenType.MINUS, "-"),
 			["."] = new Token(TokenType.DOT, "."),
@@ -196,9 +198,8 @@ namespace Tomen {
 
 			while (true) {
 				if (current == '.') {
-					// Не, ну логично же.
 					if (buffer.ToString().IndexOf('.') != -1) {
-						throw new Exception("лишняя точка < литерал num");
+						throw new Exception("Invalid number literal");
 					}
 				}
 				else if (current == '_') {
@@ -242,17 +243,11 @@ namespace Tomen {
 
 		private void Tabs() {
 			this.line++;
-			if (this.tokens.Count > 0) {
-				Char current = this.Next();
-
-				while (Char.IsWhiteSpace(current)) {
-					if (current == '\n') {
-						this.line++;
-					}
-
-					current = this.Next();
-				}
+			Char current = this.Next();
+			while(Char.IsWhiteSpace(current)) {
+				current = this.Next();
 			}
+			this.AddToken(TokenType.NL);
 		}
 
 		private void Word() {
@@ -298,7 +293,6 @@ namespace Tomen {
 
 			// Comments
 			if (current == '#') {
-				this.Next();
 				this.Comment();
 				return;
 			}
@@ -317,16 +311,16 @@ namespace Tomen {
 		}
 
 		private void Comment() {
-			Char current = this.Peek(0);
+			this.Next();
 
-			StringBuilder sb = new StringBuilder();
+			Char current = this.Peek(0);
 
 			while (true) {
 				if ("\r\n\0".IndexOf(current) != -1) {
 					break;
 				}
+
 				current = this.Next();
-				sb.Append(current);
 			}
 
 			this.Next();

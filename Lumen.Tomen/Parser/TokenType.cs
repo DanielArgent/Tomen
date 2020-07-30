@@ -19,6 +19,9 @@ namespace Tomen {
 		NAN,
 		TRUE,
 		FALSE,
-		SPLIT
+		SPLIT,
+		LBRACE,
+		RBRACE,
+		NL
 	}
 }

@@ -9,7 +9,7 @@ namespace Tomen {
 		/// <param name="path">Path to file</param>
 		/// <returns> Root table </returns>
 		public static TomlTable ReadFile(String path) {
-			return new Parser(new Lexer(File.ReadAllText(path), path).Tokenization(), path).Parsing();
+			return new Parser(new Lexer(File.ReadAllText(path), path).Tokenization(), path).Parse();
 		}
 
 		/// <summary> Writes Toml value into file </summary>

@@ -9,11 +9,14 @@ namespace Test.Tomen {
 			Console.WriteLine(Test2());
 			Console.WriteLine(Test3());
 			Console.WriteLine(Test4());
+			Console.WriteLine(Test5());
 
 			Console.ReadKey();
 		}
 
 		private static Boolean Test1() {
+			Console.WriteLine("=============== TEST-1 ==================");
+
 			TomlTable table = global::Tomen.Tomen.ReadFile("data1.toml");
 
 			if (table.Contains("key")) {
@@ -28,16 +31,22 @@ namespace Test.Tomen {
 		}
 
 		private static Boolean Test2() {
+			Console.WriteLine("=============== TEST-2 ==================");
+
 			TomlTable table = global::Tomen.Tomen.ReadFile("data2.toml");
 
 			Console.WriteLine((table["str"] as TomlString).Value);
 			Console.WriteLine((table["strl"] as TomlString).Value);
 			Console.WriteLine((table["newStr"] as TomlString).Value);
 
+			Console.WriteLine(table["342"]);
+
 			return table.Contains("invalid key");
 		}
 
 		private static Boolean Test3() {
+			Console.WriteLine("=============== TEST-3 ==================");
+
 			TomlTable table = global::Tomen.Tomen.ReadFile("data3.toml");
 
 			if (table.Contains("t")) {
@@ -58,7 +67,7 @@ namespace Test.Tomen {
 				if (value is TomlTable tomenTable) {
 					if (tomenTable.Contains("43")) {
 						value = tomenTable["43"];
-						return (value as TomlTable).Contains("k");
+						//return (value as TomlTable).Contains("k");
 					}
 				}
 				else {
@@ -66,10 +75,28 @@ namespace Test.Tomen {
 				}
 			}
 
+			if (table.Contains("x")) {
+				Console.WriteLine(table["x"]);
+			}
+
+			global::Tomen.Tomen.WriteFile("data3.txt", table); // does not work
+
 			return false;
 		}
 
 		private static Boolean Test4() {
+			Console.WriteLine("=============== TEST-4 ==================");
+
+			TomlTable root = global::Tomen.Tomen.ReadFile("data4.toml");
+
+			Console.WriteLine(root["name"]);
+
+			return true;
+		}
+
+		private static Boolean Test5() {
+			Console.WriteLine("=============== TEST-5 ==================");
+
 			TomlTable myTable = new TomlTable(null) {
 				["x"] = new TomlInt(5),
 				["y"] = new TomlInt(6)

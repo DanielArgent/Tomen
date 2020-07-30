@@ -17,77 +17,78 @@ namespace Tomen {
 			this.line = 0;
 		}
 
-		internal TomlTable Parsing(TomlTable table = null) {
-			if (table == null) {
-				table = new TomlTable(null);
-			}
+		internal TomlTable Parse(TomlTable table = null) {
+			table = table ?? new TomlTable(null);
 
 			while (!this.LookMatch(0, TokenType.EOF)) {
-				// name || "text "
-				if (this.LookMatch(0, TokenType.NAME) || this.LookMatch(0, TokenType.TEXT)) {
-					String name = this.GetId();
-					// // name || "text " .
-					if (this.Match(TokenType.DOT)) {
-						TomlTable t;
-						if (table.Contains(name)) {
-							t = table[name] as TomlTable; // if it's not table?
-						}
-						else {
-							t = new TomlTable(name);
-							table[name] = t;
-						}
-
-						name = this.GetId();
-						if (this.Match(TokenType.ASSIGNMENT)) {
-							ITomlValue value = this.Expression();
-							t[name] = value;
-						}
-
-						while (this.Match(TokenType.DOT)) {
-							if (t.Contains(name)) {
-								t = t[name] as TomlTable;
-							}
-							else {
-								t[name] = new TomlTable(name);
-								t = t[name] as TomlTable;
-							}
-							name = this.GetId();
-							if (this.Match(TokenType.ASSIGNMENT)) {
-								ITomlValue value = this.Expression();
-								t[name] = value;
-							}
-						}
-						continue;
-					}
-					else {
-						this.Match(TokenType.ASSIGNMENT);
-						ITomlValue value = this.Expression();
-						table[name] = value;
-					}
-				}
-
-				if (this.LookMatch(0, TokenType.LBRACKET) && table.Name != null) {
-					return table;
-				}
-
 				if (this.Match(TokenType.LBRACKET)) {
-					String name = this.GetId();
-					this.Match(TokenType.RBRACKET);
-
-					TomlTable t;
-					if (table.Contains(name)) {
-						t = table[name] as TomlTable;
-					}
-					else {
-						t = new TomlTable(name);
-						table[name] = t;
-					}
-
-					this.Parsing(t);
+					this.ParseTable(table);
+				}
+				else {
+					this.ParseKeyValuePair(table);
 				}
 			}
 
 			return table;
+		}
+
+		private void ParseTable(TomlTable parentTable) {
+			String key = this.GetId();
+
+			TomlTable table;
+
+			if (parentTable.Contains(key)) {
+				table = parentTable[key] as TomlTable; // unsafe
+			}
+			else {
+				table = new TomlTable(key);
+				parentTable[key] = table;
+			}
+
+			if (this.Match(TokenType.DOT)) {
+				this.ParseTable(table);
+			}
+			else {
+				this.Consume(TokenType.RBRACKET);
+				this.Match(TokenType.NL);
+
+				while (!this.LookMatch(0, TokenType.LBRACKET) && !this.LookMatch(0, TokenType.EOF)) {
+					this.ParseKeyValuePair(table);
+				}
+			}
+		}
+
+		private void ParseKeyValuePair(TomlTable parentTable) {
+			if (this.Match(TokenType.ASSIGNMENT)) {
+				throw new TomlParsingException("empty bare key", this.fileName, this.line);
+			}
+
+			String key = this.GetId();
+
+			if (this.Match(TokenType.DOT)) {
+				TomlTable table;
+
+				if (parentTable.Contains(key)) {
+					table = parentTable[key] as TomlTable; // unsafe
+				}
+				else {
+					table = new TomlTable(key);
+					parentTable[key] = table;
+				}
+
+				this.ParseKeyValuePair(table);
+			}
+			else {
+				this.Consume(TokenType.ASSIGNMENT);
+
+				if (this.Match(TokenType.NL)) {
+					throw new TomlParsingException("unspecified value", this.fileName, this.line);
+				}
+
+				parentTable[key] = this.Expression();
+			}
+
+			this.Match(TokenType.NL);
 		}
 
 		private ITomlValue Expression() {
@@ -153,11 +154,19 @@ namespace Tomen {
 		}
 
 		private String GetId() {
+			if (this.LookMatch(0, TokenType.NAME)) {
+				return this.Consume(TokenType.NAME).Text;
+			}
+
 			if (this.LookMatch(0, TokenType.TEXT)) {
 				return this.Consume(TokenType.TEXT).Text;
 			}
 
-			return this.Consume(TokenType.NAME).Text;
+			if (this.LookMatch(0, TokenType.INT)) {
+				return this.Consume(TokenType.INT).Text;
+			}
+
+			throw new TomlParsingException("unexpected key", this.fileName, this.line);
 		}
 
 		private Boolean Match(TokenType type) {
