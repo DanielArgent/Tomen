@@ -14,36 +14,29 @@ namespace Tomen {
 			this.fileName = fileName;
 			this.tokens = Tokens;
 			this.size = Tokens.Count;
+			this.position = 0;
 			this.line = 0;
 		}
 
-		internal TomlTable Parse(TomlTable table = null) {
-			table = table ?? new TomlTable(null);
+		internal TomlTable Parse() {
+			TomlTable rootTable = new TomlTable(null);
 
 			while (!this.LookMatch(0, TokenType.EOF)) {
 				if (this.Match(TokenType.LBRACKET)) {
-					this.ParseTable(table);
+					this.ParseTable(rootTable);
 				}
 				else {
-					this.ParseKeyValuePair(table);
+					this.ParseKeyValuePair(rootTable);
 				}
 			}
 
-			return table;
+			return rootTable;
 		}
 
 		private void ParseTable(TomlTable parentTable) {
-			String key = this.GetId();
+			String key = this.ParseKey();
 
-			TomlTable table;
-
-			if (parentTable.Contains(key)) {
-				table = parentTable[key] as TomlTable; // unsafe
-			}
-			else {
-				table = new TomlTable(key);
-				parentTable[key] = table;
-			}
+			TomlTable table = this.GetTableOrCreateIfAbsent(key, parentTable);
 
 			if (this.Match(TokenType.DOT)) {
 				this.ParseTable(table);
@@ -63,18 +56,10 @@ namespace Tomen {
 				throw new TomlParsingException("empty bare key", this.fileName, this.line);
 			}
 
-			String key = this.GetId();
+			String key = this.ParseKey();
 
 			if (this.Match(TokenType.DOT)) {
-				TomlTable table;
-
-				if (parentTable.Contains(key)) {
-					table = parentTable[key] as TomlTable; // unsafe
-				}
-				else {
-					table = new TomlTable(key);
-					parentTable[key] = table;
-				}
+				TomlTable table = this.GetTableOrCreateIfAbsent(key, parentTable);
 
 				this.ParseKeyValuePair(table);
 			}
@@ -85,20 +70,20 @@ namespace Tomen {
 					throw new TomlParsingException("unspecified value", this.fileName, this.line);
 				}
 
-				parentTable[key] = this.Expression();
+				parentTable[key] = this.ParseValue();
 			}
 
 			this.Match(TokenType.NL);
 		}
 
-		private ITomlValue Expression() {
+		private ITomlValue ParseValue() {
 			if (this.Match(TokenType.PLUS)) {
-				ITomlValue value = this.Expression();
+				ITomlValue value = this.ParseValue();
 				return value;
 			}
 
 			if (this.Match(TokenType.MINUS)) {
-				ITomlValue value = this.Expression();
+				ITomlValue value = this.ParseValue();
 
 				if (value is TomlInt ti) {
 					return new TomlInt(-ti.Value);
@@ -116,13 +101,29 @@ namespace Tomen {
 			}
 
 			if (this.LookMatch(0, TokenType.BAREKEY)) {
-				String number = this.Consume(TokenType.BAREKEY).Text;
+				String number = this.Consume(TokenType.BAREKEY).Text.Replace("_", "");
 
-				if(this.Match(TokenType.DOT)) {
+				// hexadecimal number
+				if(number.StartsWith("0x")) {
+					return new TomlInt(Convert.ToInt64(number.Substring(2), 16));
+				}
+
+				// octal number
+				if (number.StartsWith("0o")) {
+					return new TomlInt(Convert.ToInt64(number.Substring(2), 8));
+				}
+
+				// binary number
+				if (number.StartsWith("0b")) {
+					return new TomlInt(Convert.ToInt64(number.Substring(2), 2));
+				}
+
+				// float
+				if (this.Match(TokenType.DOT)) {
 					number += '.';
 
 					if(this.LookMatch(0, TokenType.BAREKEY)) {
-						number += this.Consume(TokenType.BAREKEY).Text;
+						number += this.Consume(TokenType.BAREKEY).Text.Replace("_", "");
 					}
 					else {
 						number += '0';
@@ -153,8 +154,10 @@ namespace Tomen {
 			if (this.Match(TokenType.LBRACKET)) {
 				List<ITomlValue> items = new List<ITomlValue>();
 				while (!this.Match(TokenType.RBRACKET)) {
-					items.Add(this.Expression());
+					items.Add(this.ParseValue());
 					this.Match(TokenType.SPLIT);
+					this.Match(TokenType.NL);
+					this.Match(TokenType.SPLIT); // ?
 				}
 				return new TomlArray(items);
 			}
@@ -162,7 +165,7 @@ namespace Tomen {
 			return TomlNull.NULL;
 		}
 
-		private String GetId() {
+		private String ParseKey() {
 			if (this.LookMatch(0, TokenType.BAREKEY)) {
 				return this.Consume(TokenType.BAREKEY).Text;
 			}
@@ -171,11 +174,21 @@ namespace Tomen {
 				return this.Consume(TokenType.TEXT).Text;
 			}
 
-			if (this.LookMatch(0, TokenType.INT)) {
-				return this.Consume(TokenType.INT).Text;
+			throw new TomlParsingException("unexpected key", this.fileName, this.line);
+		}
+
+		private TomlTable GetTableOrCreateIfAbsent(String name, TomlTable parentTable) {
+			TomlTable table;
+
+			if (parentTable.Contains(name)) {
+				table = parentTable[name] as TomlTable; // unsafe
+			}
+			else {
+				table = new TomlTable(name);
+				parentTable[name] = table;
 			}
 
-			throw new TomlParsingException("unexpected key", this.fileName, this.line);
+			return table;
 		}
 
 		private Boolean Match(TokenType type) {

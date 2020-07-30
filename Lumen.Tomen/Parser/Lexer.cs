@@ -135,13 +135,13 @@ namespace Tomen {
 				}
 
 				if (isMultiline && current == '"' && this.Peek(1) == '"' && this.Peek(2) == '"') {
-					Next();
-					Next();
+					this.Next();
+					this.Next();
 					break;
 				}
 
 				if (this.position >= this.length) {
-					throw new TomlParsingException($"unclosed{(isMultiline ? " mutiline " : " ")}string", file, line);
+					throw new TomlParsingException($"unclosed{(isMultiline ? " mutiline " : " ")}string", this.file, line);
 				}
 
 				builder.Append(current);
@@ -175,13 +175,13 @@ namespace Tomen {
 				}
 
 				if (isMultiline && current == '\'' && this.Peek(1) == '\'' && this.Peek(2) == '\'') {
-					Next();
-					Next();
+					this.Next();
+					this.Next();
 					break;
 				}
 
 				if (this.position >= this.length) {
-					throw new TomlParsingException($"unclosed{(isMultiline ? " mutiline " : " ")}literal string", file, line);
+					throw new TomlParsingException($"unclosed{(isMultiline ? " mutiline " : " ")}literal string", this.file, line);
 				}
 
 				builder.Append(current);
