@@ -6,6 +6,7 @@ namespace Test.Tomen {
 	internal static class Program {
 		internal static void Main(String[] args) {
 			Console.WriteLine(Test1());
+			Console.WriteLine(TestStrings());
 			Console.WriteLine(Test2());
 			Console.WriteLine(Test3());
 			Console.WriteLine(Test4());
@@ -26,6 +27,18 @@ namespace Test.Tomen {
 					return tomenString.Value == "value";
 				}
 			}
+
+			return false;
+		}
+
+		private static Boolean TestStrings() {
+			Console.WriteLine("=============== STRINGS ==================");
+
+			TomlTable table = global::Tomen.Tomen.ReadFile("strings.toml");
+
+			Console.WriteLine(table);
+
+			global::Tomen.Tomen.ToXml(table, "strings.xml");
 
 			return false;
 		}

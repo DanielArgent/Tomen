@@ -61,41 +61,49 @@ namespace Tomen {
 		}
 
 		private void String() {
+			// Reads hexadecimal unicode code with length from current position 
+			// and returns appropriate string
+			String UnicodeCode(Int32 length) {
+				// Valid chars are only [0-9a-fA-F]
+				Boolean IsValidChar(Char ch) {
+					return "0123456789abcedfABCDEF".IndexOf(ch) != -1;
+				}
+
+				Char currentChar = this.Next();
+				String hexCode = "";
+
+				for (Int32 i = 0; i < length; i++) {
+					if(!IsValidChar(currentChar)) {
+						throw new TomlParsingException($"char '{currentChar}' is invalid for hex code", this.file, this.line);
+					}
+
+					hexCode += currentChar;
+					currentChar = this.Next();
+				}
+
+				return Char.ConvertFromUtf32(Convert.ToInt32(hexCode, 16));
+			}
+
 			Int32 line = this.line; // remember position
 
-			this.Next();
+			this.Next(); // "
 
-			Boolean isMultiline = false;
-			if (this.Peek(0) == '"' && this.Peek(1) == '"') {
-				this.Next();
-				this.Next();
-				isMultiline = true;
+			Boolean isMultiline = this.CheckIsMultiline('"');
+			if (isMultiline) {
+				this.Next(2);
 			}
 
 			StringBuilder builder = new StringBuilder();
 			Char current = this.Peek(0);
 
 			while (true) {
+				// Escape sequences
 				if (current == '\\') {
 					current = this.Next();
 					switch (current) {
 						case '"':
 							current = this.Next();
 							builder.Append('"');
-							continue;
-						case '\r':
-							if (isMultiline) {
-								if (Environment.NewLine.Length == 2) {
-									this.Next();
-								}
-								current = this.Next();
-							}
-							continue;
-						case '\n':
-							if (isMultiline) {
-								this.Next();
-								current = this.Next();
-							}
 							continue;
 						case 'f':
 							current = this.Next();
@@ -117,29 +125,61 @@ namespace Tomen {
 							current = this.Next();
 							builder.Append('\n');
 							continue;
+						case 'u':
+							builder.Append(UnicodeCode(4));
+							current = this.Peek(0);
+							continue;
+						case 'U':
+							builder.Append(UnicodeCode(8));
+							current = this.Peek(0);
+							continue;
 						case 't':
 							current = this.Next();
 							builder.Append('\t');
 							continue;
+
+						// It works only if it is multiline string
+						case '\r':
+							if (isMultiline) {
+								if (Environment.NewLine.Length == 2) {
+									// If ends on \r\n - ignore \r
+									this.Next();
+								}
+								// Ignore \n
+								current = this.Next();
+							}
+							continue;
+						case '\n':
+							if (isMultiline) {
+								this.Next();
+								current = this.Next();
+							}
+							continue;
+
 						default:
 							throw new TomlParsingException("unknown escape sequence", this.file, line);
 					}
 				}
 
-				if (!isMultiline && current == '\n') {
-					throw new TomlParsingException("unclosed string", this.file, line);
+				if (!isMultiline) {
+					if (current == '\n') {
+						throw new TomlParsingException("unclosed string", this.file, line);
+					}
+
+					if (current == '"') {
+						this.Next();
+						break;
+					}
+				}
+				else {
+					// Mutiline stop sequence is """
+					if (current == '"' && this.Peek(1) == '"' && this.Peek(2) == '"') {
+						this.Next(3);
+						break;
+					}
 				}
 
-				if (!isMultiline && current == '"') {
-					break;
-				}
-
-				if (isMultiline && current == '"' && this.Peek(1) == '"' && this.Peek(2) == '"') {
-					this.Next();
-					this.Next();
-					break;
-				}
-
+				// End of input, but literal is not closed
 				if (this.position >= this.length) {
 					throw new TomlParsingException($"unclosed{(isMultiline ? " mutiline " : " ")}string", this.file, line);
 				}
@@ -149,8 +189,6 @@ namespace Tomen {
 				current = this.Next();
 			}
 
-			this.Next();
-
 			this.AddToken(TokenType.TEXT, builder.ToString());
 		}
 
@@ -159,11 +197,9 @@ namespace Tomen {
 
 			this.Next();
 
-			Boolean isMultiline = false;
-			if (this.Peek(0) == '\'' && this.Peek(1) == '\'') {
-				this.Next();
-				this.Next();
-				isMultiline = true;
+			Boolean isMultiline = this.CheckIsMultiline('\'');
+			if (isMultiline) {
+				this.Next(2);
 			}
 
 			StringBuilder builder = new StringBuilder();
@@ -175,8 +211,7 @@ namespace Tomen {
 				}
 
 				if (isMultiline && current == '\'' && this.Peek(1) == '\'' && this.Peek(2) == '\'') {
-					this.Next();
-					this.Next();
+					this.Next(2);
 					break;
 				}
 
@@ -192,6 +227,10 @@ namespace Tomen {
 			this.Next();
 
 			this.AddToken(TokenType.TEXT, builder.ToString());
+		}
+
+		private Boolean CheckIsMultiline(Char border) {
+			return this.Peek(0) == border && this.Peek(1) == border;
 		}
 
 		private void Tabs() {
@@ -279,8 +318,8 @@ namespace Tomen {
 			this.Next();
 		}
 
-		private Char Next() {
-			this.position++;
+		private Char Next(Int32 times=1) {
+			this.position += times;
 			return this.Peek(0);
 		}
 

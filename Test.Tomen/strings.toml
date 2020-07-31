@@ -1,0 +1,12 @@
+﻿key = "value\U000000f3"
+
+key-2 = """
+mulitiline\
+value
+"""
+
+key-3 = 'value'
+key-4 = '''
+	multiline literal\
+	string
+'''
