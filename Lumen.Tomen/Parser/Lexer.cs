@@ -21,19 +21,19 @@ namespace Tomen {
 		private readonly Int32 length;
 		private readonly List<Token> tokens;
 		private Int32 position;
-		private Int32 line;
-		private readonly String file;
+		private Int32 currentLine;
+		private readonly String currentFile;
 
 		internal Lexer(String source, String file) {
-			this.file = file;
+			this.currentFile = file;
 			this.source = source;
 			this.length = source.Length;
 			this.tokens = new List<Token>();
 			this.position = 0;
-			this.line = 1;
+			this.currentLine = 1;
 		}
 
-		internal List<Token> Tokenization() {
+		internal List<Token> GetTokens() {
 			while (this.position < this.length) {
 				Char current = this.Peek(0);
 
@@ -74,17 +74,22 @@ namespace Tomen {
 
 				for (Int32 i = 0; i < length; i++) {
 					if (!IsValidChar(currentChar)) {
-						throw new TomlParsingException($"char '{currentChar}' is invalid for hex code", this.file, this.line);
+						throw new TomlSyntaxException($"character '{currentChar}' is invalid for hexadecimal code", this.currentFile, this.currentLine);
 					}
 
 					hexCode += currentChar;
 					currentChar = this.Next();
 				}
 
-				return Char.ConvertFromUtf32(Convert.ToInt32(hexCode, 16));
+				try {
+					return Char.ConvertFromUtf32(Convert.ToInt32(hexCode, 16));
+				}
+				catch {
+					throw new TomlSyntaxException($"value '{hexCode}' is invalid hexadecimal code of character", this.currentFile, this.currentLine);
+				}
 			}
 
-			Int32 line = this.line; // remember position
+			Int32 startLiteralLine = this.currentLine; // Remember position
 
 			this.Next(); // "
 
@@ -157,13 +162,13 @@ namespace Tomen {
 							continue;
 
 						default:
-							throw new TomlParsingException("unknown escape sequence", this.file, line);
+							throw new TomlSyntaxException($"unknown escape sequence '\\{current}'", this.currentFile, startLiteralLine);
 					}
 				}
 
 				if (!isMultiline) {
 					if (current == '\n') {
-						throw new TomlParsingException("unclosed string", this.file, line);
+						throw new TomlSyntaxException("unclosed string literal", this.currentFile, startLiteralLine);
 					}
 
 					if (current == '"') {
@@ -181,7 +186,7 @@ namespace Tomen {
 
 				// End of input, but literal is not closed
 				if (this.position >= this.length) {
-					throw new TomlParsingException($"unclosed{(isMultiline ? " mutiline " : " ")}string", this.file, line);
+					throw new TomlSyntaxException($"unclosed{(isMultiline ? " mutiline " : " ")}string", this.currentFile, startLiteralLine);
 				}
 
 				builder.Append(current);
@@ -193,7 +198,7 @@ namespace Tomen {
 		}
 
 		private void LiteralString() {
-			Int32 line = this.line; // remember position
+			Int32 line = this.currentLine; // remember position
 
 			this.Next();
 
@@ -216,7 +221,7 @@ namespace Tomen {
 				}
 
 				if (this.position >= this.length) {
-					throw new TomlParsingException($"unclosed{(isMultiline ? " mutiline " : " ")}literal string", this.file, line);
+					throw new TomlSyntaxException($"unclosed{(isMultiline ? " mutiline " : " ")}literal string", this.currentFile, line);
 				}
 
 				builder.Append(current);
@@ -234,7 +239,7 @@ namespace Tomen {
 		}
 
 		private void Tabs() {
-			this.line++;
+			this.currentLine++;
 
 			while (Char.IsWhiteSpace(this.Next())) { }
 
@@ -289,7 +294,7 @@ namespace Tomen {
 			String ExpectDigits() {
 				String result = "";
 
-				Char current = this.Peek(0);
+				Char current = this.Peek();
 				while (Char.IsDigit(current)) {
 					result += current;
 					current = this.Next();
@@ -301,14 +306,14 @@ namespace Tomen {
 			String ExpectNDigits(Int32 length) {
 				String result = "";
 
-				Char current = this.Peek(0);
+				Char current = this.Peek();
 				while (length > 0) {
 					if (Char.IsDigit(current)) {
 						result += current;
 						current = this.Next();
 					}
 					else {
-						throw new Exception("WTF");
+						throw new TomlSyntaxException($"expected {length} digits, got '{current}'", this.currentFile, this.currentLine);
 					}
 
 					length--;
@@ -317,55 +322,60 @@ namespace Tomen {
 				return result;
 			}
 
-			Char ExpectChar(Char chr) {
-				if (this.Peek(0) == chr) {
+			Char ExpectChar(Char requiredChar) {
+				Char currentChar = this.Peek();
+
+				if (currentChar == requiredChar) {
 					this.Next();
 				}
 				else {
-					throw new Exception("invalidChar");
+					throw new TomlSyntaxException($"expected char '{requiredChar}', got '{currentChar}'", this.currentFile, this.currentLine);
 				}
 
-				return chr;
+				return requiredChar;
 			}
 
-			if (Regex.IsMatch(word, @"^\d{4}-\d{2}-\d{2}T\d{2}$")) {
-				word += ExpectChar(':') + ExpectNDigits(2) + ExpectChar(':') + ExpectNDigits(2);
+			if (Regex.IsMatch(word, @"^\d{4}-\d{2}-\d{2}T\d{2}$")) { // If it is DateTime fragment
+				word += ExpectChar(':') + ExpectNDigits(2) + ExpectChar(':') + ExpectNDigits(2); // :mm:ss
 
-				Char current = this.Peek(0);
-
+				Char current = this.Peek();
 				if (current == '.') {
 					this.Next();
-					word += '.' + ExpectDigits();
+					word += '.' + ExpectDigits(); // .f+
 				}
 
-				current = this.Peek(0);
-
-				if(current == 'Z') {
+				current = this.Peek();
+				// If it is with zero offset
+				if (current == 'Z') {
 					this.Next();
 					this.AddToken(TokenType.DATE_TIME_OFFSET, word + "+00:00");
 					return;
 				}
 
-				if(current == '+' || current == '-') {
+				// If it is with some offset
+				if (current == '+' || current == '-') {
 					this.Next();
 
-					word += current + ExpectNDigits(2) + ExpectChar(':') + ExpectNDigits(2);
+					word += current + ExpectNDigits(2) + ExpectChar(':') + ExpectNDigits(2); // +/-hh:mm
 					this.AddToken(TokenType.DATE_TIME_OFFSET, word);
 					return;
 				}
 
 				this.AddToken(TokenType.DATE_TIME, word);
 			}
-			else {
-				String localTime = word + ExpectChar(':') + ExpectNDigits(2) + ExpectChar(':') + ExpectNDigits(2);
+			else if (Regex.IsMatch(word, @"^\d{2}$")) { // If it is LocalTime fragment
+				String localTime = word + ExpectChar(':') + ExpectNDigits(2) + ExpectChar(':') + ExpectNDigits(2); // :mm:ss
 
-				Char current = this.Peek(0);
-				if (current == '.') {
+				Char current = this.Peek();
+				if (current == '.') { // .f+
 					this.Next();
 					localTime += '.' + ExpectDigits();
 				}
 
-				AddToken(TokenType.LOCAL_TIME, localTime);
+				this.AddToken(TokenType.LOCAL_TIME, localTime);
+			}
+			else {
+				throw new TomlSyntaxException("unexpected char ':'", this.currentFile, this.currentLine);
 			}
 		}
 
@@ -399,10 +409,10 @@ namespace Tomen {
 
 		private Char Next(Int32 times = 1) {
 			this.position += times;
-			return this.Peek(0);
+			return this.Peek();
 		}
 
-		private Char Peek(Int32 relativePosition) {
+		private Char Peek(Int32 relativePosition = 0) {
 			Int32 position = this.position + relativePosition;
 			if (position >= this.length) {
 				return '\0';
@@ -412,7 +422,7 @@ namespace Tomen {
 		}
 
 		private void AddToken(Token token) {
-			token.Line = this.line;
+			token.Line = this.currentLine;
 			this.tokens.Add(token);
 		}
 
@@ -421,7 +431,7 @@ namespace Tomen {
 		}
 
 		private void AddToken(TokenType type, String text) {
-			this.tokens.Add(new Token(type, text, this.line));
+			this.tokens.Add(new Token(type, text, this.currentLine));
 		}
 
 		internal static Boolean IsValidId(String id) {

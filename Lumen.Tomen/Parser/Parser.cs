@@ -9,15 +9,15 @@ namespace Tomen {
 		private readonly List<Token> tokens;
 		private readonly Int32 size;
 		private Int32 position;
-		private Int32 line;
-		private readonly String fileName;
+		private Int32 currentLine;
+		private readonly String currentFile;
 
 		internal Parser(List<Token> Tokens, String fileName) {
-			this.fileName = fileName;
+			this.currentFile = fileName;
 			this.tokens = Tokens;
 			this.size = Tokens.Count;
 			this.position = 0;
-			this.line = 0;
+			this.currentLine = 0;
 		}
 
 		internal TomlTable Parse() {
@@ -56,8 +56,9 @@ namespace Tomen {
 		}
 
 		private void ParseKeyValuePair(TomlTable parentTable) {
+			// If there is no key
 			if (this.Match(TokenType.ASSIGNMENT)) {
-				throw new TomlParsingException("empty bare key", this.fileName, this.line);
+				throw new TomlSyntaxException("expected key, got '='", this.currentFile, this.currentLine);
 			}
 
 			String key = this.ParseKey();
@@ -70,8 +71,9 @@ namespace Tomen {
 			else {
 				this.Consume(TokenType.ASSIGNMENT);
 
+				// There is no value
 				if (this.Match(TokenType.NL)) {
-					throw new TomlParsingException("unspecified value", this.fileName, this.line);
+					throw new TomlParsingException("unspecified value", this.currentFile, this.currentLine);
 				}
 
 				parentTable[key] = this.ParseValue();
@@ -83,6 +85,7 @@ namespace Tomen {
 		private ITomlValue ParseValue() {
 			if (this.Match(TokenType.PLUS)) {
 				ITomlValue value = this.ParseValue();
+				// TODO: what if value is not a number?
 				return value;
 			}
 
@@ -96,6 +99,8 @@ namespace Tomen {
 				if (value is TomlDouble td) {
 					return new TomlDouble(-td.Value);
 				}
+
+				// TODO: what if value is not a number?
 
 				return value;
 			}
@@ -159,7 +164,7 @@ namespace Tomen {
 					return new TomlDateTime(DateTime.Parse(number));
 				}
 
-				return new TomlInt(Int64.Parse(number, System.Globalization.NumberStyles.Any));
+				return new TomlInt(Int64.Parse(number, NumberStyles.Any));
 			}
 
 			if (this.Match(TokenType.INF)) {
@@ -201,14 +206,18 @@ namespace Tomen {
 				return this.Consume(TokenType.TEXT).Text;
 			}
 
-			throw new TomlParsingException("unexpected key", this.fileName, this.line);
+			throw new TomlParsingException("unexpected key", this.currentFile, this.currentLine);
 		}
 
 		private TomlTable GetTableOrCreateIfAbsent(String name, TomlTable parentTable) {
 			TomlTable table;
 
 			if (parentTable.Contains(name)) {
-				table = parentTable[name] as TomlTable; // unsafe
+				if (parentTable[name] is TomlTable tomlTable) {
+					table = tomlTable;
+				} else {
+					throw new TomlSemanticException($"value with key '{parentTable.Name}.{name}' is already exists and it is not ITomlOpenTable", this.currentFile, this.currentLine);
+				}
 			}
 			else {
 				table = new TomlTable(name);
@@ -225,7 +234,7 @@ namespace Tomen {
 				return false;
 			}
 
-			this.line = current.Line;
+			this.currentLine = current.Line;
 			this.position++;
 			return true;
 		}
@@ -245,15 +254,16 @@ namespace Tomen {
 		}
 
 		private Token Consume(TokenType type) {
-			Token current = this.GetToken(0);
-			this.line = current.Line;
+			Token currentToken = this.GetToken(0);
+			this.currentLine = currentToken.Line;
 
-			if (type != current.Type) {
-				throw new Exception();
+			if (type != currentToken.Type) {
+				throw new TomlSyntaxException($"excepted {type}, got {currentToken.Type}", 
+					this.currentFile, this.currentLine);
 			}
 
 			this.position++;
-			return current;
+			return currentToken;
 		}
 	}
 }

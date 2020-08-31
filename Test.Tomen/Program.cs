@@ -6,6 +6,7 @@ namespace Test.Tomen {
 	internal static class Program {
 		internal static void Main(String[] args) {
 			Console.WriteLine(Test1());
+			Console.WriteLine(TestInvalidTable());
 			Console.WriteLine(TestStrings());
 			Console.WriteLine(Test2());
 			Console.WriteLine(Test3());
@@ -40,6 +41,20 @@ namespace Test.Tomen {
 			Console.WriteLine(table);
 
 			global::Tomen.Tomen.ToXml(table, "strings.xml");
+
+			return false;
+		}
+
+		private static Boolean TestInvalidTable() {
+			Console.WriteLine("=============== INVALID TABLE ==================");
+
+			try {
+				global::Tomen.Tomen.ReadFile("invalid-table.toml");
+			} catch (TomlSemanticException tse) {
+				Console.WriteLine(tse.Message);
+
+				return true;
+			}
 
 			return false;
 		}

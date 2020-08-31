@@ -1,0 +1,4 @@
+﻿table.not-a-table = 9
+
+# This will raise TomlSemanticException: value with key 'table.not-a-table' is already exists and it is not extendable table
+table.not-a-table.invalid = true
