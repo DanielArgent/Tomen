@@ -48,6 +48,7 @@
     <Compile Include="Parser\TokenType.cs" />
     <Compile Include="Tomen.cs" />
     <Compile Include="Values\TomlArray.cs" />
+    <Compile Include="Values\TomlDateTime.cs" />
     <Compile Include="Values\TomlNull.cs" />
     <Compile Include="Values\TomlString.cs" />
     <Compile Include="Values\TomlTable.cs" />

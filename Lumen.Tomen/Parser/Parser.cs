@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace Tomen {
 	internal sealed class Parser {
@@ -22,6 +24,8 @@ namespace Tomen {
 			TomlTable rootTable = new TomlTable(null);
 
 			while (!this.LookMatch(0, TokenType.EOF)) {
+				this.Match(TokenType.NL);
+
 				if (this.Match(TokenType.LBRACKET)) {
 					this.ParseTable(rootTable);
 				}
@@ -100,11 +104,29 @@ namespace Tomen {
 				return new TomlString(this.Consume(TokenType.TEXT).Text);
 			}
 
+			if (this.LookMatch(0, TokenType.LOCAL_TIME)) {
+				return TomlLocalTime.Parse(this.Consume(TokenType.LOCAL_TIME).Text);
+			}
+
+			if (this.LookMatch(0, TokenType.DATE_TIME)) {
+				var str = this.Consume(TokenType.DATE_TIME).Text;
+
+				return new TomlDateTime(DateTime.ParseExact(str, "yyyy-MM-ddTHH:mm:ss.FFFFFFF", CultureInfo.InvariantCulture));
+			}
+
+			if (this.LookMatch(0, TokenType.DATE_TIME_OFFSET)) {
+				String str = this.Consume(TokenType.DATE_TIME_OFFSET).Text;
+
+				DateTimeOffset offset =
+					DateTimeOffset.ParseExact(str, "yyyy-MM-ddTHH:mm:ss.FFFFFFFzzz", CultureInfo.InvariantCulture);
+				return new TomlDateTimeOffset(offset);
+			}
+
 			if (this.LookMatch(0, TokenType.BAREKEY)) {
 				String number = this.Consume(TokenType.BAREKEY).Text.Replace("_", "");
 
 				// hexadecimal number
-				if(number.StartsWith("0x")) {
+				if (number.StartsWith("0x")) {
 					return new TomlInt(Convert.ToInt64(number.Substring(2), 16));
 				}
 
@@ -122,7 +144,7 @@ namespace Tomen {
 				if (this.Match(TokenType.DOT)) {
 					number += '.';
 
-					if(this.LookMatch(0, TokenType.BAREKEY)) {
+					if (this.LookMatch(0, TokenType.BAREKEY)) {
 						number += this.Consume(TokenType.BAREKEY).Text.Replace("_", "");
 					}
 					else {
@@ -130,6 +152,11 @@ namespace Tomen {
 					}
 
 					return new TomlDouble(Double.Parse(number, System.Globalization.CultureInfo.InvariantCulture));
+				}
+
+				// It's local date
+				if (Regex.IsMatch(number, @"^\d{4}-\d{2}-\d{2}$")) {
+					return new TomlDateTime(DateTime.Parse(number));
 				}
 
 				return new TomlInt(Int64.Parse(number, System.Globalization.NumberStyles.Any));
@@ -207,8 +234,8 @@ namespace Tomen {
 			return this.GetToken(pos).Type == type;
 		}
 
-		private Token GetToken(Int32 NewPosition) {
-			Int32 position = this.position + NewPosition;
+		private Token GetToken(Int32 offset) {
+			Int32 position = this.position + offset;
 
 			if (position >= this.size) {
 				return new Token(TokenType.EOF, "");
@@ -218,15 +245,15 @@ namespace Tomen {
 		}
 
 		private Token Consume(TokenType type) {
-			Token Current = this.GetToken(0);
-			this.line = Current.Line;
+			Token current = this.GetToken(0);
+			this.line = current.Line;
 
-			if (type != Current.Type) {
+			if (type != current.Type) {
 				throw new Exception();
 			}
 
 			this.position++;
-			return Current;
+			return current;
 		}
 	}
 }

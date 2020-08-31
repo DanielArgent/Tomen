@@ -6,10 +6,10 @@ num2 = 8.5
 
 [objects]
 
-[bools]
+[bools] # another comment
 x = true
 y = false
-
+ # comment
 [array]
 m1 = [5, 3, 7, 7, -inf]
 

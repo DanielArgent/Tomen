@@ -22,6 +22,9 @@ namespace Tomen {
 		SPLIT,
 		LBRACE,
 		RBRACE,
-		NL
+		NL,
+		DATE_TIME,
+		LOCAL_TIME,
+		DATE_TIME_OFFSET
 	}
 }

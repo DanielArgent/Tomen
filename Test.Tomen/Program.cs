@@ -11,6 +11,7 @@ namespace Test.Tomen {
 			Console.WriteLine(Test3());
 			Console.WriteLine(Test4());
 			Console.WriteLine(Test5());
+			Console.WriteLine(TestDates());
 
 			Console.ReadKey();
 		}
@@ -118,6 +119,24 @@ namespace Test.Tomen {
 			global::Tomen.Tomen.WriteFile("x.toml", myTable);
 
 			global::Tomen.Tomen.ToXml(myTable, "x.xml");
+
+			return true;
+		}
+
+		private static Boolean TestDates() {
+			Console.WriteLine("=============== DATES ==================");
+
+			TomlTable root = global::Tomen.Tomen.ReadFile("dates.toml");
+
+			Console.WriteLine(root["date"]);
+			Console.WriteLine(root["date-time-x"]);
+			Console.WriteLine(root["date-time-y"]);
+
+			Console.WriteLine(root["time-x"]);
+			Console.WriteLine(root["time-y"]);
+
+			Console.WriteLine(root["date-time-offset-1"]);
+			Console.WriteLine(root["date-time-offset-2"]);
 
 			return true;
 		}

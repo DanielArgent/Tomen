@@ -73,7 +73,7 @@ namespace Tomen {
 				String hexCode = "";
 
 				for (Int32 i = 0; i < length; i++) {
-					if(!IsValidChar(currentChar)) {
+					if (!IsValidChar(currentChar)) {
 						throw new TomlParsingException($"char '{currentChar}' is invalid for hex code", this.file, this.line);
 					}
 
@@ -235,10 +235,9 @@ namespace Tomen {
 
 		private void Tabs() {
 			this.line++;
-			Char current = this.Next();
-			while (Char.IsWhiteSpace(current)) {
-				current = this.Next();
-			}
+
+			while (Char.IsWhiteSpace(this.Next())) { }
+
 			this.AddToken(TokenType.NL);
 		}
 
@@ -260,6 +259,12 @@ namespace Tomen {
 
 			String word = buffer.ToString();
 
+			// It's not barekey - it's LocalTime or DateTime or DateTimeOffset
+			if (current == ':') {
+				this.ParseDateTime(word);
+				return;
+			}
+
 			switch (word) {
 				case "inf":
 					this.AddToken(TokenType.INF, word);
@@ -277,6 +282,90 @@ namespace Tomen {
 				default:
 					this.AddToken(TokenType.BAREKEY, word);
 					break;
+			}
+		}
+
+		private void ParseDateTime(String word) {
+			String ExpectDigits() {
+				String result = "";
+
+				Char current = this.Peek(0);
+				while (Char.IsDigit(current)) {
+					result += current;
+					current = this.Next();
+				}
+
+				return result;
+			}
+
+			String ExpectNDigits(Int32 length) {
+				String result = "";
+
+				Char current = this.Peek(0);
+				while (length > 0) {
+					if (Char.IsDigit(current)) {
+						result += current;
+						current = this.Next();
+					}
+					else {
+						throw new Exception("WTF");
+					}
+
+					length--;
+				}
+
+				return result;
+			}
+
+			Char ExpectChar(Char chr) {
+				if (this.Peek(0) == chr) {
+					this.Next();
+				}
+				else {
+					throw new Exception("invalidChar");
+				}
+
+				return chr;
+			}
+
+			if (Regex.IsMatch(word, @"^\d{4}-\d{2}-\d{2}T\d{2}$")) {
+				word += ExpectChar(':') + ExpectNDigits(2) + ExpectChar(':') + ExpectNDigits(2);
+
+				Char current = this.Peek(0);
+
+				if (current == '.') {
+					this.Next();
+					word += '.' + ExpectDigits();
+				}
+
+				current = this.Peek(0);
+
+				if(current == 'Z') {
+					this.Next();
+					this.AddToken(TokenType.DATE_TIME_OFFSET, word + "+00:00");
+					return;
+				}
+
+				if(current == '+' || current == '-') {
+					this.Next();
+
+					word += current + ExpectNDigits(2) + ExpectChar(':') + ExpectNDigits(2);
+					this.AddToken(TokenType.DATE_TIME_OFFSET, word);
+					return;
+				}
+
+				this.AddToken(TokenType.DATE_TIME, word);
+			}
+			else {
+				String localTime = word + ExpectChar(':') + ExpectNDigits(2) + ExpectChar(':') + ExpectNDigits(2);
+
+				Char current = this.Peek(0);
+				if (current == '.') {
+					this.Next();
+					localTime += '.' + ExpectDigits();
+				}
+
+				AddToken(TokenType.LOCAL_TIME, localTime);
 			}
 		}
 
@@ -303,22 +392,12 @@ namespace Tomen {
 		}
 
 		private void Comment() {
-			this.Next();
-
-			Char current = this.Peek(0);
-
-			while (true) {
-				if ("\r\n\0".IndexOf(current) != -1) {
-					break;
-				}
-
-				current = this.Next();
-			}
+			while ("\n\0".IndexOf(this.Next()) == -1) { }
 
 			this.Next();
 		}
 
-		private Char Next(Int32 times=1) {
+		private Char Next(Int32 times = 1) {
 			this.position += times;
 			return this.Peek(0);
 		}

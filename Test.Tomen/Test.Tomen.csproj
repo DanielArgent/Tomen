@@ -50,6 +50,9 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <None Include="dates.toml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Include="strings.toml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
