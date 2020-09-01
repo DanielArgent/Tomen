@@ -25,6 +25,9 @@ namespace Tomen {
 		NL,
 		DATE_TIME,
 		LOCAL_TIME,
-		DATE_TIME_OFFSET
+		DATE_TIME_OFFSET,
+		DIGITS,
+		NUMBER_WITH_BASE,
+		COLON
 	}
 }

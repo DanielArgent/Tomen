@@ -109,26 +109,36 @@ namespace Tomen {
 				return new TomlString(this.Consume(TokenType.TEXT).Text);
 			}
 
-			if (this.LookMatch(0, TokenType.LOCAL_TIME)) {
-				return TomlLocalTime.Parse(this.Consume(TokenType.LOCAL_TIME).Text);
+			if (this.LookMatch(0, TokenType.DIGITS) && this.LookMatch(1, TokenType.COLON)) {
+				return this.ParseLocalTime();
 			}
 
-			if (this.LookMatch(0, TokenType.DATE_TIME)) {
-				var str = this.Consume(TokenType.DATE_TIME).Text;
-
-				return new TomlDateTime(DateTime.ParseExact(str, "yyyy-MM-ddTHH:mm:ss.FFFFFFF", CultureInfo.InvariantCulture));
+			if (this.LookMatch(0, TokenType.DIGITS) && this.LookMatch(1, TokenType.MINUS)) {
+				return this.ParseDate();
 			}
 
-			if (this.LookMatch(0, TokenType.DATE_TIME_OFFSET)) {
-				String str = this.Consume(TokenType.DATE_TIME_OFFSET).Text;
+			if (this.LookMatch(0, TokenType.DIGITS)) {
+				String digits = this.Consume(TokenType.DIGITS).Text;
 
-				DateTimeOffset offset =
-					DateTimeOffset.ParseExact(str, "yyyy-MM-ddTHH:mm:ss.FFFFFFFzzz", CultureInfo.InvariantCulture);
-				return new TomlDateTimeOffset(offset);
+				// float
+				if (this.Match(TokenType.DOT)) {
+					digits += '.';
+
+					if (this.LookMatch(0, TokenType.DIGITS)) {
+						digits += this.Consume(TokenType.DIGITS).Text.Replace("_", "");
+					}
+					else {
+						digits += '0';
+					}
+
+					return new TomlDouble(Double.Parse(digits, CultureInfo.InvariantCulture));
+				}
+
+				return new TomlInt(Int64.Parse(digits, NumberStyles.Any));
 			}
 
-			if (this.LookMatch(0, TokenType.BAREKEY)) {
-				String number = this.Consume(TokenType.BAREKEY).Text.Replace("_", "");
+			if (this.LookMatch(0, TokenType.NUMBER_WITH_BASE)) {
+				String number = this.Consume(TokenType.NUMBER_WITH_BASE).Text.Replace("_", "");
 
 				// hexadecimal number
 				if (number.StartsWith("0x")) {
@@ -145,26 +155,7 @@ namespace Tomen {
 					return new TomlInt(Convert.ToInt64(number.Substring(2), 2));
 				}
 
-				// float
-				if (this.Match(TokenType.DOT)) {
-					number += '.';
-
-					if (this.LookMatch(0, TokenType.BAREKEY)) {
-						number += this.Consume(TokenType.BAREKEY).Text.Replace("_", "");
-					}
-					else {
-						number += '0';
-					}
-
-					return new TomlDouble(Double.Parse(number, System.Globalization.CultureInfo.InvariantCulture));
-				}
-
-				// It's local date
-				if (Regex.IsMatch(number, @"^\d{4}-\d{2}-\d{2}$")) {
-					return new TomlDateTime(DateTime.Parse(number));
-				}
-
-				return new TomlInt(Int64.Parse(number, NumberStyles.Any));
+				// else?
 			}
 
 			if (this.Match(TokenType.INF)) {
@@ -197,16 +188,86 @@ namespace Tomen {
 			return TomlNull.NULL;
 		}
 
+
+		Tuple<Int32, Int32> ParseHoursAndMinutes() {
+			Int32 hours = Convert.ToInt32(this.Consume(TokenType.DIGITS).Text);
+			this.Consume(TokenType.COLON);
+			Int32 minutes = Convert.ToInt32(this.Consume(TokenType.DIGITS).Text);
+
+			return new Tuple<Int32, Int32>(hours, minutes);
+		}
+
+		TomlLocalTime ParseLocalTime() {
+			Tuple<Int32, Int32> hoursAndMinutes = this.ParseHoursAndMinutes();
+			this.Consume(TokenType.COLON);
+			Int32 seconds = Convert.ToInt32(this.Consume(TokenType.DIGITS).Text);
+
+			Int32 milliseconds = 0;
+
+			if (this.Match(TokenType.DOT)) {
+				milliseconds = Convert.ToInt32(this.Consume(TokenType.DIGITS).Text.Substring(0, 3));
+			}
+
+			return new TomlLocalTime(hoursAndMinutes.Item1, hoursAndMinutes.Item2, seconds, milliseconds);
+		}
+
+		ITomlValue ParseDate() {
+			Int32 year = Convert.ToInt32(this.Consume(TokenType.DIGITS).Text);
+			this.Consume(TokenType.MINUS);
+			Int32 month = Convert.ToInt32(this.Consume(TokenType.DIGITS).Text);
+			this.Consume(TokenType.MINUS);
+			Int32 day = Convert.ToInt32(this.Consume(TokenType.DIGITS).Text);
+
+
+			if (this.LookMatch(0, TokenType.BAREKEY) && this.GetToken(0).Text.ToUpper() == "T") {
+				return this.ParseDateTime(year, month, day);
+			}
+			else {
+				return new TomlLocalDate(year, month, day);
+			}
+
+
+		}
+
+		ITomlValue ParseDateTime(Int32 year, Int32 month, Int32 day) {
+			this.Consume(this.GetToken(0).Type);
+
+			TomlLocalTime time = this.ParseLocalTime();
+
+			DateTime dateTime = new DateTime(year, month, day, time.Hours, time.Minutes, time.Seconds, time.Milliseconds);
+
+			if (this.LookMatch(0, TokenType.BAREKEY) && this.GetToken(0).Text.ToUpper() == "Z") {
+				this.Consume(TokenType.BAREKEY);
+				return new TomlDateTimeOffset(new DateTimeOffset(dateTime, TimeSpan.FromMilliseconds(0)));
+			}
+
+			if (this.Match(TokenType.PLUS)) {
+				Tuple<Int32, Int32> offset = this.ParseHoursAndMinutes();
+				return new TomlDateTimeOffset(new DateTimeOffset(dateTime, new TimeSpan(offset.Item1, offset.Item2, 0)));
+			}
+
+			if (this.Match(TokenType.MINUS)) {
+				Tuple<Int32, Int32> offset = this.ParseHoursAndMinutes();
+				return new TomlDateTimeOffset(new DateTimeOffset(dateTime, new TimeSpan(-offset.Item1, -offset.Item2, 0)));
+			}
+
+			return new TomlDateTime(dateTime);
+		}
+
 		private String ParseKey() {
-			if (this.LookMatch(0, TokenType.BAREKEY)) {
-				return this.Consume(TokenType.BAREKEY).Text;
+			String key = "";
+
+			while (!this.LookMatch(0, TokenType.DOT) && !this.LookMatch(0, TokenType.RBRACKET)
+				&& !this.LookMatch(0, TokenType.ASSIGNMENT)) {
+				Token currentToken = this.GetToken(0);
+				key += this.Consume(currentToken.Type).Text;
 			}
 
-			if (this.LookMatch(0, TokenType.TEXT)) {
-				return this.Consume(TokenType.TEXT).Text;
+			if (key == "") {
+				throw new TomlParsingException("unexpected key", this.currentFile, this.currentLine);
 			}
 
-			throw new TomlParsingException("unexpected key", this.currentFile, this.currentLine);
+			return key;
 		}
 
 		private TomlTable GetTableOrCreateIfAbsent(String name, TomlTable parentTable) {
@@ -215,7 +276,8 @@ namespace Tomen {
 			if (parentTable.Contains(name)) {
 				if (parentTable[name] is TomlTable tomlTable) {
 					table = tomlTable;
-				} else {
+				}
+				else {
 					throw new TomlSemanticException($"value with key '{parentTable.Name}.{name}' is already exists and it is not ITomlOpenTable", this.currentFile, this.currentLine);
 				}
 			}
@@ -258,7 +320,7 @@ namespace Tomen {
 			this.currentLine = currentToken.Line;
 
 			if (type != currentToken.Type) {
-				throw new TomlSyntaxException($"excepted {type}, got {currentToken.Type}", 
+				throw new TomlSyntaxException($"excepted {type}, got {currentToken.Type}",
 					this.currentFile, this.currentLine);
 			}
 

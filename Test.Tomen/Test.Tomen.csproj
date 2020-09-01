@@ -50,6 +50,9 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <None Include="invalid-comments.toml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Include="invalid-table.toml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

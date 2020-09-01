@@ -7,5 +7,5 @@ date-time-y = 1332-02-12T23:21:34.542
 time-x = 23:21:37
 time-y = 23:21:34.542
 
-date-time-offset-1 = 1999-10-09T20:18:00Z
-date-time-offset-2 = 1999-10-09T20:18:00+04:21
+date-time-offset-1 = 1999-10-09t20:18:00z
+date-time-offset-2 = 1999-10-09T20:18:00-04:21

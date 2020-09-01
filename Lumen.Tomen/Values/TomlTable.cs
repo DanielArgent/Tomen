@@ -7,6 +7,7 @@ namespace Tomen {
 	public class TomlTable : ITomlValue {
 		internal readonly Dictionary<String, ITomlValue> pairs;
 		public String Name { get; }
+		internal Int32 commentCount = 0;
 
 		public ITomlValue this[String name] {
 			get {
@@ -58,7 +59,7 @@ namespace Tomen {
 						result.Append($"{innerTable.ToString(prefix + "." + this.Name)}{Environment.NewLine}");
 					}
 					else {
-						result.Append($"{innerTable.ToString()}{Environment.NewLine}");
+						result.Append($"{innerTable}{Environment.NewLine}");
 					}
 				}
 				else {
@@ -89,7 +90,7 @@ namespace Tomen {
 					if (this.Name != null) {
 						result.Append($"{innerTable.ToString(this.Name)}{Environment.NewLine}");
 					} else {
-						result.Append($"{innerTable.ToString()}{Environment.NewLine}");
+						result.Append($"{innerTable}{Environment.NewLine}");
 					}
 				}
 				else {

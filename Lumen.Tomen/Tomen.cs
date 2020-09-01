@@ -32,7 +32,7 @@ namespace Tomen {
 			if (value is TomlTable table) {
 				XmlElement tableNode = document.CreateElement(table.Name ?? "table");
 				node.AppendChild(tableNode);
-				foreach (var i in table.pairs) {
+				foreach (System.Collections.Generic.KeyValuePair<String, ITomlValue> i in table.pairs) {
 					TomlValueToXml(i.Key, i.Value, tableNode, document);
 				}
 			}
@@ -50,7 +50,7 @@ namespace Tomen {
 		}
 
 		private static void TomlValueToXml(String name, ITomlValue value, XmlElement node, XmlDocument document) {
-			XmlElement newNode = null;
+			XmlElement newNode;
 
 			if (Lexer.IsValidId(name)) {
 				newNode = document.CreateElement(name);
@@ -63,7 +63,7 @@ namespace Tomen {
 			}
 
 			if (value is TomlTable table) {
-				foreach (var i in table.pairs) {
+				foreach (System.Collections.Generic.KeyValuePair<String, ITomlValue> i in table.pairs) {
 					TomlValueToXml(i.Key, i.Value, newNode, document);
 				}
 			}

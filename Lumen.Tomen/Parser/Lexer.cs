@@ -15,6 +15,7 @@ namespace Tomen {
 			["+"] = new Token(TokenType.PLUS, "+"),
 			["-"] = new Token(TokenType.MINUS, "-"),
 			["."] = new Token(TokenType.DOT, "."),
+			[":"] = new Token(TokenType.COLON, ":"),
 			[","] = new Token(TokenType.SPLIT, "."),
 		};
 		private readonly String source;
@@ -43,7 +44,10 @@ namespace Tomen {
 				else if (current == '\'') {
 					this.LiteralString();
 				}
-				else if (Char.IsLetterOrDigit(current) || current == '_') {
+				else if (Char.IsDigit(current) || current == '_') {
+					this.Digits();
+				}
+				else if (Char.IsLetter(current) || current == '_') {
 					this.BareKey();
 				}
 				else if (operatorsString.IndexOf(current) != -1) {
@@ -58,6 +62,48 @@ namespace Tomen {
 			}
 
 			return this.tokens;
+		}
+
+		private void Digits() {
+			String result = "";
+
+			Char current = this.Peek();
+			while (Char.IsDigit(current)) {
+				if(result == "0" && "box".IndexOf(current) != -1) {
+					switch (current) {
+						case 'b':
+							this.ParseWithBase(2, "0" + current);
+							return;
+						case 'o':
+							this.ParseWithBase(8, "0" + current);
+							return;
+						case 'x':
+							this.ParseWithBase(16, "0" + current);
+							return;
+					}
+				}
+
+				result += current;
+				current = this.Next();
+			}
+
+			this.AddToken(TokenType.DIGITS, result);
+		}
+
+		const String VALID_CHARS = "0123456789abcedf";
+
+		private void ParseWithBase(Int32 requiredBase, String v) {
+			String validCharsForBase = VALID_CHARS.Substring(0, requiredBase);
+
+			String result = v;
+
+			Char current = this.Peek();
+			while (validCharsForBase.IndexOf(current) != -1) {
+				result += current;
+				current = this.Next();
+			}
+
+			this.AddToken(TokenType.NUMBER_WITH_BASE, result);
 		}
 
 		private void String() {
@@ -252,7 +298,7 @@ namespace Tomen {
 			Char current = this.Peek(0);
 
 			while (true) {
-				if (!Char.IsLetterOrDigit(current)
+				if (!Char.IsLetter(current)
 					&& current != '_' && current != '-') {
 					break;
 				}
@@ -263,12 +309,6 @@ namespace Tomen {
 			}
 
 			String word = buffer.ToString();
-
-			// It's not barekey - it's LocalTime or DateTime or DateTimeOffset
-			if (current == ':') {
-				this.ParseDateTime(word);
-				return;
-			}
 
 			switch (word) {
 				case "inf":
@@ -287,95 +327,6 @@ namespace Tomen {
 				default:
 					this.AddToken(TokenType.BAREKEY, word);
 					break;
-			}
-		}
-
-		private void ParseDateTime(String word) {
-			String ExpectDigits() {
-				String result = "";
-
-				Char current = this.Peek();
-				while (Char.IsDigit(current)) {
-					result += current;
-					current = this.Next();
-				}
-
-				return result;
-			}
-
-			String ExpectNDigits(Int32 length) {
-				String result = "";
-
-				Char current = this.Peek();
-				while (length > 0) {
-					if (Char.IsDigit(current)) {
-						result += current;
-						current = this.Next();
-					}
-					else {
-						throw new TomlSyntaxException($"expected {length} digits, got '{current}'", this.currentFile, this.currentLine);
-					}
-
-					length--;
-				}
-
-				return result;
-			}
-
-			Char ExpectChar(Char requiredChar) {
-				Char currentChar = this.Peek();
-
-				if (currentChar == requiredChar) {
-					this.Next();
-				}
-				else {
-					throw new TomlSyntaxException($"expected char '{requiredChar}', got '{currentChar}'", this.currentFile, this.currentLine);
-				}
-
-				return requiredChar;
-			}
-
-			if (Regex.IsMatch(word, @"^\d{4}-\d{2}-\d{2}T\d{2}$")) { // If it is DateTime fragment
-				word += ExpectChar(':') + ExpectNDigits(2) + ExpectChar(':') + ExpectNDigits(2); // :mm:ss
-
-				Char current = this.Peek();
-				if (current == '.') {
-					this.Next();
-					word += '.' + ExpectDigits(); // .f+
-				}
-
-				current = this.Peek();
-				// If it is with zero offset
-				if (current == 'Z') {
-					this.Next();
-					this.AddToken(TokenType.DATE_TIME_OFFSET, word + "+00:00");
-					return;
-				}
-
-				// If it is with some offset
-				if (current == '+' || current == '-') {
-					this.Next();
-
-					word += current + ExpectNDigits(2) + ExpectChar(':') + ExpectNDigits(2); // +/-hh:mm
-					this.AddToken(TokenType.DATE_TIME_OFFSET, word);
-					return;
-				}
-
-				this.AddToken(TokenType.DATE_TIME, word);
-			}
-			else if (Regex.IsMatch(word, @"^\d{2}$")) { // If it is LocalTime fragment
-				String localTime = word + ExpectChar(':') + ExpectNDigits(2) + ExpectChar(':') + ExpectNDigits(2); // :mm:ss
-
-				Char current = this.Peek();
-				if (current == '.') { // .f+
-					this.Next();
-					localTime += '.' + ExpectDigits();
-				}
-
-				this.AddToken(TokenType.LOCAL_TIME, localTime);
-			}
-			else {
-				throw new TomlSyntaxException("unexpected char ':'", this.currentFile, this.currentLine);
 			}
 		}
 
@@ -402,7 +353,16 @@ namespace Tomen {
 		}
 
 		private void Comment() {
-			while ("\n\0".IndexOf(this.Next()) == -1) { }
+			Char current = this.Next();
+			while ("\n\0".IndexOf(current) == -1) {
+				// According to v1.0.0-rc.2 character \r (U+000D) also not permitted
+				// But in fact, it appears on some platfroms on endlines, so we allow it.
+				if(current < 8 || (10 < current && current < 13) || (13 < current && current < 31) || current == 127) {
+					throw new TomlSyntaxException($"control characters U+0000 to U+0008, U+000A to U+000C, U+000E to U+001F, U+007F are not permitted in comments, got char (U+{(Int32)current:x})", this.currentFile, this.currentLine);
+				}
+
+				current = this.Next();
+			}
 
 			this.Next();
 		}

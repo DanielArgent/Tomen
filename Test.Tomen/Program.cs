@@ -4,9 +4,10 @@ using Tomen;
 
 namespace Test.Tomen {
 	internal static class Program {
-		internal static void Main(String[] args) {
+		internal static void Main() {
 			Console.WriteLine(Test1());
 			Console.WriteLine(TestInvalidTable());
+			Console.WriteLine(TestInvalidComments());
 			Console.WriteLine(TestStrings());
 			Console.WriteLine(Test2());
 			Console.WriteLine(Test3());
@@ -41,6 +42,19 @@ namespace Test.Tomen {
 			Console.WriteLine(table);
 
 			global::Tomen.Tomen.ToXml(table, "strings.xml");
+
+			return false;
+		}
+
+		private static Boolean TestInvalidComments() {
+			Console.WriteLine("=============== INVALID COMMENTS ==================");
+
+			try {
+				global::Tomen.Tomen.ReadFile("invalid-comments.toml");
+			} catch (TomlParsingException tpe) {
+				Console.WriteLine(tpe.Message);
+				return true;
+			}
 
 			return false;
 		}
@@ -95,7 +109,6 @@ namespace Test.Tomen {
 
 				if (value is TomlTable tomenTable) {
 					if (tomenTable.Contains("43")) {
-						value = tomenTable["43"];
 						//return (value as TomlTable).Contains("k");
 					}
 				}

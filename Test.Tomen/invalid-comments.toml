@@ -1,0 +1,2 @@
+﻿# This comment is valid
+key = "value" # But this contains not permitted character 
