@@ -50,6 +50,9 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <None Include="invalid-key-value-pair-ending.toml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Include="invalid-unspecified-key.toml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

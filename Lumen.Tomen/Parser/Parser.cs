@@ -77,9 +77,11 @@ namespace Tomen {
 				}
 
 				parentTable[key] = this.ParseValue();
-			}
 
-			this.Match(TokenType.NL);
+				if (!this.Match(TokenType.NL) && !this.LookMatch(0, TokenType.EOF)) {
+					throw new TomlParsingException("there must be a newline or end of file after a key/value pair", this.currentFile, this.currentLine);
+				}
+			}
 		}
 
 		private ITomlValue ParseValue() {
@@ -187,7 +189,6 @@ namespace Tomen {
 
 			return TomlNull.NULL;
 		}
-
 
 		Tuple<Int32, Int32> ParseHoursAndMinutes() {
 			Int32 hours = Convert.ToInt32(this.Consume(TokenType.DIGITS).Text);

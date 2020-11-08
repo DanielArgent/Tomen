@@ -8,6 +8,7 @@ namespace Test.Tomen {
 			Console.WriteLine(Test1());
 			Console.WriteLine(TestInvalidTable());
 			Console.WriteLine(TestInvalidUnspecifiedKey());
+			Console.WriteLine(TestInvalidKeyValuePairEnding());
 			Console.WriteLine(TestInvalidComments());
 			Console.WriteLine(TestStrings());
 			Console.WriteLine(Test2());
@@ -52,6 +53,20 @@ namespace Test.Tomen {
 
 			try {
 				global::Tomen.Tomen.ReadFile("invalid-unspecified-key.toml");
+			}
+			catch (TomlParsingException tpe) {
+				Console.WriteLine(tpe.Message);
+				return true;
+			}
+
+			return false;
+		}
+
+		private static Boolean TestInvalidKeyValuePairEnding() {
+			Console.WriteLine("=============== INVALID KEY VALUE PAIR ENDING ==================");
+
+			try {
+				global::Tomen.Tomen.ReadFile("invalid-key-value-pair-ending.toml");
 			}
 			catch (TomlParsingException tpe) {
 				Console.WriteLine(tpe.Message);
