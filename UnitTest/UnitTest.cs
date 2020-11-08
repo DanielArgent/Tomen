@@ -16,9 +16,21 @@ namespace UnitTest {
 			TomlTable table = Tomen.Tomen.ReadFile("toml\\strings.toml");
 
 			Assert.AreEqual("valueE", (table["key"] as TomlString).Value);
-			Assert.AreEqual("\r\nmulitilinevalue\r\n", (table["key-2"] as TomlString).Value);
+			Assert.AreEqual("mulitilinevalue\r\n", (table["key-2"] as TomlString).Value);
 			Assert.AreEqual("value", (table["key-3"] as TomlString).Value);
-			Assert.AreEqual("\r\n\tmultiline literal\\\r\n\tstring\r\n", (table["key-4"] as TomlString).Value);
+			Assert.AreEqual("\tmultiline literal\\\r\n\tstring\r\n", (table["key-4"] as TomlString).Value);
+		}
+
+		[TestMethod]
+		public void TestStringEscapeWs() {
+			TomlTable table = Tomen.Tomen.ReadFile("toml\\strings-escape-ws.toml");
+
+			var str1 = (table["str1"] as TomlString).Value;
+			var str2 = (table["str2"] as TomlString).Value;
+			var str3 = (table["str3"] as TomlString).Value;
+
+			Assert.AreEqual(str1, str2);
+			Assert.AreEqual(str2, str3);
 		}
 
 		[TestMethod]

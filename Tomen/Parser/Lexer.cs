@@ -142,6 +142,14 @@ namespace Tomen {
 			Boolean isMultiline = this.CheckIsMultiline('"');
 			if (isMultiline) {
 				this.Next(2);
+
+				// "A newline immediately following the opening delimiter will be trimmed"
+				Char currentChar = this.Peek(0);
+				if(currentChar == '\r' && this.Peek(1) == '\n') {
+					this.Next(2);
+				} else if (currentChar == '\n') {
+					this.Next();
+				}
 			}
 
 			StringBuilder builder = new StringBuilder();
@@ -260,6 +268,15 @@ namespace Tomen {
 			Boolean isMultiline = this.CheckIsMultiline('\'');
 			if (isMultiline) {
 				this.Next(2);
+
+				// "A newline immediately following the opening delimiter will be trimmed"
+				Char currentChar = this.Peek(0);
+				if (currentChar == '\r' && this.Peek(1) == '\n') {
+					this.Next(2);
+				}
+				else if (currentChar == '\n') {
+					this.Next();
+				}
 			}
 
 			StringBuilder builder = new StringBuilder();

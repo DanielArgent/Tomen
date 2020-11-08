@@ -102,6 +102,9 @@
     <None Include="toml\invalid-string-literal.toml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Include="toml\strings-escape-ws.toml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Include="toml\strings.toml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
