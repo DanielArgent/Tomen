@@ -76,6 +76,10 @@ namespace Tomen {
 					throw new TomlParsingException("unspecified value", this.currentFile, this.currentLine);
 				}
 
+				if(parentTable.Contains(key)) {
+					throw new TomlSemanticException($"key {key} is already defined", this.currentFile, this.currentLine);
+				}
+
 				parentTable[key] = this.ParseValue();
 
 				if (!this.Match(TokenType.NL) && !this.LookMatch(0, TokenType.EOF)) {

@@ -54,6 +54,18 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+    <None Include="toml\numeric-dotted-keys.toml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="toml\dotted-keys.toml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="toml\invalid-defining-same-key-diff-way.toml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="toml\invalid-defining-same-key.toml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Include="toml\invalid-missed-key.toml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
@@ -69,7 +81,7 @@
     <None Include="toml\invalid-key-value-pair-ending.toml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Include="toml\invalid-table.toml">
+    <None Include="toml\invalid-dotted-keys.toml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Include="toml\invalid-unspecified-key.toml">

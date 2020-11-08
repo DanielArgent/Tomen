@@ -61,9 +61,45 @@ namespace UnitTest {
 		}
 
 		[TestMethod]
-		public void TestInvalidTable() {
+		public void TestDottedKeys() {
+			TomlTable table = Tomen.Tomen.ReadFile("toml\\dotted-keys.toml");
+
+			Assert.AreEqual("Orange", (table["name"] as TomlString).Value);
+
+			var physical = table["physical"] as TomlTable;
+
+			Assert.AreEqual("orange", (physical["color"] as TomlString).Value);
+			Assert.AreEqual("round", (physical["shape"] as TomlString).Value);
+
+			var site = table["site"] as TomlTable;
+			Assert.AreEqual(true, (site["google.com"] as TomlBool).Value);
+		}
+
+		[TestMethod]
+		public void TestNumericDottedKeys() {
+			TomlTable table = Tomen.Tomen.ReadFile("toml\\numeric-dotted-keys.toml");
+
+			var physical = table["3"] as TomlTable;
+
+			Assert.AreEqual("pi", (physical["14159"] as TomlString).Value);
+		}
+
+		[TestMethod]
+		public void TestInvalidDottedKeys() {
 			Assert.ThrowsException<TomlSemanticException>(() =>
-				Tomen.Tomen.ReadFile("toml\\invalid-table.toml"));
+				Tomen.Tomen.ReadFile("toml\\invalid-dotted-keys.toml"));
+		}
+
+		[TestMethod]
+		public void TestInvalidDefiningSameKey() {
+			Assert.ThrowsException<TomlSemanticException>(() =>
+				Tomen.Tomen.ReadFile("toml\\invalid-defining-same-key.toml"));
+		}
+
+		[TestMethod]
+		public void TestInvalidDefiningSameKeyDiffWay() {
+			Assert.ThrowsException<TomlSemanticException>(() =>
+				Tomen.Tomen.ReadFile("toml\\invalid-defining-same-key-diff-way.toml"));
 		}
 	}
 }
