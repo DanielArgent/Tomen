@@ -43,20 +43,50 @@ namespace UnitTest {
 		}
 
 		[TestMethod]
+		public void TestInvalidStringLiteral() {
+			Assert.ThrowsException<TomlSyntaxException>(() =>
+				Tomen.Tomen.ReadFile("toml\\invalid-string-literal.toml"));
+		}
+
+		[TestMethod]
+		public void TestInvalidStringLiteral2() {
+			Assert.ThrowsException<TomlSyntaxException>(() =>
+				Tomen.Tomen.ReadFile("toml\\invalid-string-literal-2.toml"));
+		}
+
+		[TestMethod]
+		public void TestInvalidStringLiteral3() {
+			Assert.ThrowsException<TomlSyntaxException>(() =>
+				Tomen.Tomen.ReadFile("toml\\invalid-string-literal-3.toml"));
+		}
+
+		[TestMethod]
+		public void TestInvalidStringLiteral4() {
+			Assert.ThrowsException<TomlSyntaxException>(() =>
+				Tomen.Tomen.ReadFile("toml\\invalid-string-literal-4.toml"));
+		}
+
+		[TestMethod]
+		public void TestInvalidUnicodeSeq() {
+			Assert.ThrowsException<TomlSyntaxException>(() =>
+				Tomen.Tomen.ReadFile("toml\\invalid-unicode-seq.toml"));
+		}
+
+		[TestMethod]
 		public void TestInvalidKeyValuePairEnding() {
-			Assert.ThrowsException<TomlParsingException>(() =>
+			Assert.ThrowsException<TomlSyntaxException>(() =>
 		   Tomen.Tomen.ReadFile("toml\\invalid-key-value-pair-ending.toml"));
 		}
 
 		[TestMethod]
 		public void TestInvalidUnspecifiedKey() {
-			Assert.ThrowsException<TomlParsingException>(() =>
+			Assert.ThrowsException<TomlSyntaxException>(() =>
 		   Tomen.Tomen.ReadFile("toml\\invalid-unspecified-key.toml"));
 		}
 
 		[TestMethod]
 		public void TestInvalidMissedKey() {
-			Assert.ThrowsException<TomlParsingException>(() =>
+			Assert.ThrowsException<TomlSyntaxException>(() =>
 		   Tomen.Tomen.ReadFile("toml\\invalid-missed-key.toml"));
 		}
 

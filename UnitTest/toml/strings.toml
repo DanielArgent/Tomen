@@ -2,7 +2,7 @@
 
 key-2 = """
 mulitiline\
-value
+	value
 """
 
 key-3 = 'value'

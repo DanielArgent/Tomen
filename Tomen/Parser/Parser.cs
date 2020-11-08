@@ -58,7 +58,7 @@ namespace Tomen {
 		private void ParseKeyValuePair(TomlTable parentTable) {
 			// If there is no key
 			if (this.Match(TokenType.ASSIGNMENT)) {
-				throw new TomlParsingException("expected key, got '='", this.currentFile, this.currentLine);
+				throw new TomlSyntaxException("expected key, got '='", this.currentFile, this.currentLine);
 			}
 
 			String key = this.ParseKey();
@@ -73,7 +73,7 @@ namespace Tomen {
 
 				// There is no value
 				if (this.Match(TokenType.NL) || this.Match(TokenType.EOF)) {
-					throw new TomlParsingException("unspecified value", this.currentFile, this.currentLine);
+					throw new TomlSyntaxException("unspecified value", this.currentFile, this.currentLine);
 				}
 
 				if(parentTable.Contains(key)) {
@@ -83,7 +83,7 @@ namespace Tomen {
 				parentTable[key] = this.ParseValue();
 
 				if (!this.Match(TokenType.NL) && !this.LookMatch(0, TokenType.EOF)) {
-					throw new TomlParsingException("there must be a newline or end of file after a key/value pair", this.currentFile, this.currentLine);
+					throw new TomlSyntaxException("there must be a newline or end of file after a key/value pair", this.currentFile, this.currentLine);
 				}
 			}
 		}

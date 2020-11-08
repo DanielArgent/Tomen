@@ -111,7 +111,7 @@ namespace Tomen {
 			// and returns appropriate string
 			String UnicodeCode(Int32 length) {
 				// Valid chars are only [0-9a-fA-F]
-				Boolean IsValidChar(Char ch) {
+				Boolean IsValidHexChar(Char ch) {
 					return "0123456789abcedfABCDEF".IndexOf(ch) != -1;
 				}
 
@@ -119,7 +119,7 @@ namespace Tomen {
 				String hexCode = "";
 
 				for (Int32 i = 0; i < length; i++) {
-					if (!IsValidChar(currentChar)) {
+					if (!IsValidHexChar(currentChar)) {
 						throw new TomlSyntaxException($"character '{currentChar}' is invalid for hexadecimal code", this.currentFile, this.currentLine);
 					}
 
@@ -196,14 +196,23 @@ namespace Tomen {
 									// If ends on \r\n - ignore \r
 									this.Next();
 								}
+
 								// Ignore \n
 								current = this.Next();
+
+								while(Char.IsWhiteSpace(current)) {
+									current = this.Next();
+								}
 							}
 							continue;
 						case '\n':
 							if (isMultiline) {
 								this.Next();
 								current = this.Next();
+
+								while (Char.IsWhiteSpace(current)) {
+									current = this.Next();
+								}
 							}
 							continue;
 
@@ -214,7 +223,7 @@ namespace Tomen {
 
 				if (!isMultiline) {
 					if (current == '\n') {
-						throw new TomlSyntaxException("unclosed string literal", this.currentFile, startLiteralLine);
+						throw new TomlSyntaxException($"unclosed string", this.currentFile, startLiteralLine);
 					}
 
 					if (current == '"') {
