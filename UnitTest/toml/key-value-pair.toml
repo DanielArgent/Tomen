@@ -1,0 +1,15 @@
+﻿barekey = 1
+
+bare_key = 2
+
+bare-key = 3
+
+"quoted" = 4
+
+'single "quoted"' = 5
+
+"ʎǝʞ" = 6
+
+"" = 7
+
+1102 = 8

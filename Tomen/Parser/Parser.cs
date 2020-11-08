@@ -58,7 +58,7 @@ namespace Tomen {
 		private void ParseKeyValuePair(TomlTable parentTable) {
 			// If there is no key
 			if (this.Match(TokenType.ASSIGNMENT)) {
-				throw new TomlSyntaxException("expected key, got '='", this.currentFile, this.currentLine);
+				throw new TomlParsingException("expected key, got '='", this.currentFile, this.currentLine);
 			}
 
 			String key = this.ParseKey();
@@ -262,10 +262,6 @@ namespace Tomen {
 				&& !this.LookMatch(0, TokenType.ASSIGNMENT)) {
 				Token currentToken = this.GetToken(0);
 				key += this.Consume(currentToken.Type).Text;
-			}
-
-			if (key == "") {
-				throw new TomlParsingException("unexpected key", this.currentFile, this.currentLine);
 			}
 
 			return key;
