@@ -72,7 +72,7 @@ namespace Tomen {
 				this.Consume(TokenType.ASSIGNMENT);
 
 				// There is no value
-				if (this.Match(TokenType.NL)) {
+				if (this.Match(TokenType.NL) || this.Match(TokenType.EOF)) {
 					throw new TomlParsingException("unspecified value", this.currentFile, this.currentLine);
 				}
 

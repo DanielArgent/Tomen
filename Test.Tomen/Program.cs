@@ -7,6 +7,7 @@ namespace Test.Tomen {
 		internal static void Main() {
 			Console.WriteLine(Test1());
 			Console.WriteLine(TestInvalidTable());
+			Console.WriteLine(TestInvalidUnspecifiedKey());
 			Console.WriteLine(TestInvalidComments());
 			Console.WriteLine(TestStrings());
 			Console.WriteLine(Test2());
@@ -42,6 +43,20 @@ namespace Test.Tomen {
 			Console.WriteLine(table);
 
 			global::Tomen.Tomen.ToXml(table, "strings.xml");
+
+			return false;
+		}
+
+		private static Boolean TestInvalidUnspecifiedKey() {
+			Console.WriteLine("=============== INVALID UNSPECIFIED KEY ==================");
+
+			try {
+				global::Tomen.Tomen.ReadFile("invalid-unspecified-key.toml");
+			}
+			catch (TomlParsingException tpe) {
+				Console.WriteLine(tpe.Message);
+				return true;
+			}
 
 			return false;
 		}

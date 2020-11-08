@@ -358,7 +358,7 @@ namespace Tomen {
 				// According to v1.0.0-rc.2 character \r (U+000D) also not permitted
 				// But in fact, it appears on some platfroms on endlines, so we allow it.
 				if(current < 8 || (10 < current && current < 13) || (13 < current && current < 31) || current == 127) {
-					throw new TomlSyntaxException($"control characters U+0000 to U+0008, U+000A to U+000C, U+000E to U+001F, U+007F are not permitted in comments, got char (U+{(Int32)current:x})", this.currentFile, this.currentLine);
+					throw new TomlSyntaxException($"control characters U+0000 to U+0008, U+000A to U+000C, U+000E to U+001F, U+007F are not permitted in comments, got char (U+{(Int32)current:X4})", this.currentFile, this.currentLine);
 				}
 
 				current = this.Next();
