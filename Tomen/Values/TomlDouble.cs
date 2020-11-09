@@ -2,7 +2,7 @@
 
 namespace Tomen {
 	/// <summary> Toml double value </summary>
-	public class TomlDouble : ITomlValue {
+	public class TomlDouble : TomlValue {
 		/// <summary> Internal value </summary>
 		public Double Value { get; }
 

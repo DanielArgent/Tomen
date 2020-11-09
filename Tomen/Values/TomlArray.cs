@@ -3,11 +3,11 @@ using System.Collections.Generic;
 
 namespace Tomen {
 	/// <summary> Toml array object </summary>
-	public class TomlArray : ITomlValue {
+	public class TomlArray : TomlValue {
 		/// <summary> Values of array </summary>
-		public List<ITomlValue> Value { get; }
+		public List<TomlValue> Value { get; }
 
-		public TomlArray(List<ITomlValue> value) {
+		public TomlArray(List<TomlValue> value) {
 			this.Value = value;
 		}
 

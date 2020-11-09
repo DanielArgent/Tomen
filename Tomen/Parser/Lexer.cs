@@ -24,6 +24,7 @@ namespace Tomen {
 		private readonly String currentFile;
 		private Int32 position;
 		private Int32 currentLine;
+		private Boolean isValueSide;
 
 		internal Lexer(String source, String file) {
 			this.currentFile = file;
@@ -32,6 +33,7 @@ namespace Tomen {
 			this.tokens = new List<Token>();
 			this.position = 0;
 			this.currentLine = 1;
+			this.isValueSide = false;
 		}
 
 		internal List<Token> GetTokens() {
@@ -44,10 +46,10 @@ namespace Tomen {
 				else if (current == '\'') {
 					this.LiteralString();
 				}
-				else if (Char.IsDigit(current)) {
+				else if (isValueSide && Char.IsDigit(current)) {
 					this.Digits();
 				}
-				else if (Char.IsLetter(current) || current == '_') {
+				else if (Char.IsLetterOrDigit(current) || current == '_' || (!isValueSide && current == '-')) {
 					this.BareKey();
 				}
 				else if (operatorsString.IndexOf(current) != -1) {
@@ -92,6 +94,7 @@ namespace Tomen {
 				}
 
 				result.Append(current);
+				previous = current;
 				current = this.Next();
 			}
 
@@ -100,8 +103,6 @@ namespace Tomen {
 
 		const String VALID_CHARS = "0123456789abcedf";
 
-		/// <param name="requiredBase">One of 2, 8, 16</param>
-		/// <param name="prefixChar">One of 'x', 'o', 'b'</param>
 		private void ParseWithBase(Int32 requiredBase, Char prefixChar) {
 			String validCharsForBase = VALID_CHARS.Substring(0, requiredBase);
 
@@ -268,7 +269,11 @@ namespace Tomen {
 				current = this.Next();
 			}
 
-			this.AddToken(TokenType.TEXT, builder.ToString());
+			if (this.isValueSide) {
+				this.AddToken(TokenType.TEXT, builder.ToString());
+			} else {
+				this.AddToken(TokenType.BAREKEY, builder.ToString());
+			}
 		}
 
 		private void LiteralString() {
@@ -314,7 +319,12 @@ namespace Tomen {
 
 			this.Next();
 
-			this.AddToken(TokenType.TEXT, builder.ToString());
+			if (this.isValueSide) {
+				this.AddToken(TokenType.TEXT, builder.ToString());
+			}
+			else {
+				this.AddToken(TokenType.BAREKEY, builder.ToString());
+			}
 		}
 
 		private Boolean CheckIsMultiline(Char border) {
@@ -323,6 +333,8 @@ namespace Tomen {
 
 		private void Tabs() {
 			this.currentLine++;
+
+			this.isValueSide = false;
 
 			while (Char.IsWhiteSpace(this.Next())) { }
 
@@ -335,7 +347,7 @@ namespace Tomen {
 			Char current = this.Peek(0);
 
 			while (true) {
-				if (!Char.IsLetter(current)
+				if (!Char.IsLetterOrDigit(current)
 					&& current != '_' && current != '-') {
 					break;
 				}
@@ -347,23 +359,26 @@ namespace Tomen {
 
 			String word = buffer.ToString();
 
-			switch (word) {
-				case "inf":
-					this.AddToken(TokenType.INF, word);
-					break;
-				case "nan":
-					this.AddToken(TokenType.NAN, word);
-					break;
-				case "true":
-					this.AddToken(TokenType.TRUE, word);
-					break;
-				case "false":
-					this.AddToken(TokenType.FALSE, word);
-					break;
-
-				default:
-					this.AddToken(TokenType.BAREKEY, word);
-					break;
+			if (isValueSide) {
+				switch (word) {
+					case "inf":
+						this.AddToken(TokenType.INF, word);
+						break;
+					case "nan":
+						this.AddToken(TokenType.NAN, word);
+						break;
+					case "true":
+						this.AddToken(TokenType.TRUE, word);
+						break;
+					case "false":
+						this.AddToken(TokenType.FALSE, word);
+						break;
+					default:
+						this.AddToken(TokenType.BAREKEY, word);
+						break;
+				}
+			} else {
+				this.AddToken(TokenType.BAREKEY, word);
 			}
 		}
 
@@ -381,9 +396,16 @@ namespace Tomen {
 
 			while (true) {
 				if (!operatorsDictionary.ContainsKey(buffer.ToString() + current)) {
-					this.AddToken(operatorsDictionary[buffer.ToString()]);
+					var token = operatorsDictionary[buffer.ToString()];
+
+					if(token.Type == TokenType.ASSIGNMENT) {
+						this.isValueSide = true;
+					}
+
+					this.AddToken(token);
 					return;
 				}
+
 				buffer.Append(current);
 				current = this.Next();
 			}
@@ -401,9 +423,7 @@ namespace Tomen {
 				current = this.Next();
 			}
 
-			this.AddToken(TokenType.NL);
-
-			this.Next();
+			this.Tabs();
 		}
 
 		private Char Next(Int32 times = 1) {

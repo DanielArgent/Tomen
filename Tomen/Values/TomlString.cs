@@ -2,7 +2,7 @@
 
 namespace Tomen {
 	/// <summary> Toml string </summary>
-	public class TomlString : ITomlValue {
+	public class TomlString : TomlValue {
 		public String Value { get; set; }
 
 		/// <summary> Creates a Toml string from System.String </summary>

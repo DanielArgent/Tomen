@@ -3,7 +3,7 @@ using System.Text.RegularExpressions;
 
 namespace Tomen {
 	/// <summary> Toml double value </summary>
-	public class TomlDateTime : ITomlValue {
+	public class TomlDateTime : TomlValue {
 		/// <summary> Internal value </summary>
 		public DateTime Value { get; }
 
@@ -19,7 +19,7 @@ namespace Tomen {
 	}
 
 	/// <summary> Toml double value </summary>
-	public class TomlDateTimeOffset : ITomlValue {
+	public class TomlDateTimeOffset : TomlValue {
 		/// <summary> Internal value </summary>
 		public DateTimeOffset Value { get; }
 
@@ -34,7 +34,7 @@ namespace Tomen {
 		}
 	}
 
-	public class TomlLocalDate : ITomlValue {
+	public class TomlLocalDate : TomlValue {
 		public Int32 Year { get; }
 		public Int32 Month { get; }
 		public Int32 Day { get; }
@@ -51,7 +51,7 @@ namespace Tomen {
 		}
 	}
 
-	public class TomlLocalTime : ITomlValue {
+	public class TomlLocalTime : TomlValue {
 		public Int32 Hours { get; }
 		public Int32 Minutes { get; }
 		public Int32 Seconds { get; }

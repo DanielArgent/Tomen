@@ -2,7 +2,7 @@
 
 namespace Tomen {
 	/// <summary> Toml integer value </summary>
-	public class TomlInt : ITomlValue {
+	public class TomlInt : TomlValue {
 		public Int64 Value { get; }
 
 		/// <summary> Creates a new Toml integer value </summary>

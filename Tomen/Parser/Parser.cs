@@ -27,7 +27,10 @@ namespace Tomen {
 				this.Match(TokenType.NL);
 
 				if (this.Match(TokenType.LBRACKET)) {
-					this.ParseTable(rootTable);
+					this.ParseTableDefinition(rootTable);
+				}
+				else if (this.LookMatch(1, TokenType.DOT)) {
+					this.ParseDottedKeyValuePair(rootTable);
 				}
 				else {
 					this.ParseKeyValuePair(rootTable);
@@ -37,66 +40,104 @@ namespace Tomen {
 			return rootTable;
 		}
 
-		private void ParseTable(TomlTable parentTable) {
-			String key = this.ParseKey();
-
+		private void ParseTableDefinition(TomlTable parentTable) {
+			String key = this.Consume(TokenType.BAREKEY).Text;
 			TomlTable table = this.GetTableOrCreateIfAbsent(key, parentTable);
 
-			if (this.Match(TokenType.DOT)) {
-				this.ParseTable(table);
+			while (this.Match(TokenType.DOT)) {
+				key = this.Consume(TokenType.BAREKEY).Text;
+				table = this.GetTableOrCreateIfAbsent(key, table);
 			}
-			else {
-				this.Consume(TokenType.RBRACKET);
-				this.Match(TokenType.NL);
 
-				while (!this.LookMatch(0, TokenType.LBRACKET) && !this.LookMatch(0, TokenType.EOF)) {
+			this.Consume(TokenType.RBRACKET);
+			this.Match(TokenType.NL);
+
+			while (!this.LookMatch(0, TokenType.LBRACKET) && !this.LookMatch(0, TokenType.EOF)) {
+				if (this.LookMatch(1, TokenType.DOT)) {
+					this.ParseDottedKeyValuePair(table);
+				} else {
 					this.ParseKeyValuePair(table);
 				}
 			}
+
+			if (table.pairs.Count != 0) {
+				table.IsClosed = true;
+			}
+		}
+
+		private void ParseDottedKeyValuePair(TomlTable parentTable) {
+			String key;
+			TomlTable table = parentTable;
+
+			while (this.LookMatch(1, TokenType.DOT)) {
+				key = this.Consume(TokenType.BAREKEY).Text;
+				table = this.GetTableOrCreateDottedIfAbsent(key, table);
+				this.Match(TokenType.DOT);
+			}
+
+			key = this.Consume(TokenType.BAREKEY).Text;
+
+			this.Consume(TokenType.ASSIGNMENT);
+
+			// There is no value
+			if (this.Match(TokenType.NL) || this.Match(TokenType.EOF)) {
+				throw new TomlSyntaxException("unspecified value", this.currentFile, this.currentLine);
+			}
+
+			var value = this.ParseValue();
+
+			if (!this.Match(TokenType.NL) && !this.LookMatch(0, TokenType.EOF)) {
+				throw new TomlSyntaxException("there must be a newline or end of file after a key/value pair", this.currentFile, this.currentLine);
+			}
+
+			if (parentTable.Contains(key)) {
+				throw new TomlSemanticException($"key {key} is already defined in this table", this.currentFile, this.currentLine);
+			}
+
+			table[key] = value;
 		}
 
 		private void ParseKeyValuePair(TomlTable parentTable) {
 			// If there is no key
-			if (this.Match(TokenType.ASSIGNMENT)) {
+			if (this.Match(TokenType.ASSIGNMENT)) { // generalize it on any token except barekey
 				throw new TomlSyntaxException("expected key, got '='", this.currentFile, this.currentLine);
 			}
 
-			String key = this.ParseKey();
+			String key = this.Consume(TokenType.BAREKEY).Text;
 
-			if (this.Match(TokenType.DOT)) {
-				TomlTable table = this.GetTableOrCreateIfAbsent(key, parentTable);
+			this.Consume(TokenType.ASSIGNMENT);
 
-				this.ParseKeyValuePair(table);
+			// There is no value
+			if (this.Match(TokenType.NL) || this.Match(TokenType.EOF)) {
+				throw new TomlSyntaxException("unspecified value", this.currentFile, this.currentLine);
 			}
-			else {
-				this.Consume(TokenType.ASSIGNMENT);
 
-				// There is no value
-				if (this.Match(TokenType.NL) || this.Match(TokenType.EOF)) {
-					throw new TomlSyntaxException("unspecified value", this.currentFile, this.currentLine);
-				}
+			var value = this.ParseValue();
 
-				if(parentTable.Contains(key)) {
-					throw new TomlSemanticException($"key {key} is already defined", this.currentFile, this.currentLine);
-				}
-
-				parentTable[key] = this.ParseValue();
-
-				if (!this.Match(TokenType.NL) && !this.LookMatch(0, TokenType.EOF)) {
-					throw new TomlSyntaxException("there must be a newline or end of file after a key/value pair", this.currentFile, this.currentLine);
-				}
+			if (!this.Match(TokenType.NL) && !this.LookMatch(0, TokenType.EOF)) {
+				throw new TomlSyntaxException("there must be a newline or end of file after a key/value pair", this.currentFile, this.currentLine);
 			}
+
+			if (parentTable.IsClosed) {
+				throw new TomlSemanticException($"table '{parentTable.Name}' is closed ", this.currentFile, this.currentLine);
+			}
+
+			if (parentTable.Contains(key)) {
+				throw new TomlSemanticException($"key {key} is already defined in this table", this.currentFile, this.currentLine);
+			}
+
+			parentTable[key] = value;
 		}
 
-		private ITomlValue ParseValue() {
+		private TomlValue ParseValue() {
 			if (this.Match(TokenType.PLUS)) {
-				ITomlValue value = this.ParseValue();
+				TomlValue value = this.ParseValue();
 				// TODO: what if value is not a number?
 				return value;
 			}
 
 			if (this.Match(TokenType.MINUS)) {
-				ITomlValue value = this.ParseValue();
+				TomlValue value = this.ParseValue();
 
 				if (value is TomlInt ti) {
 					return new TomlInt(-ti.Value);
@@ -181,7 +222,7 @@ namespace Tomen {
 			}
 
 			if (this.Match(TokenType.LBRACKET)) {
-				List<ITomlValue> items = new List<ITomlValue>();
+				List<TomlValue> items = new List<TomlValue>();
 				while (!this.Match(TokenType.RBRACKET)) {
 					items.Add(this.ParseValue());
 					this.Match(TokenType.SPLIT);
@@ -216,7 +257,7 @@ namespace Tomen {
 			return new TomlLocalTime(hoursAndMinutes.Item1, hoursAndMinutes.Item2, seconds, milliseconds);
 		}
 
-		ITomlValue ParseDate() {
+		TomlValue ParseDate() {
 			Int32 year = Convert.ToInt32(this.Consume(TokenType.DIGITS).Text);
 			this.Consume(TokenType.MINUS);
 			Int32 month = Convert.ToInt32(this.Consume(TokenType.DIGITS).Text);
@@ -234,7 +275,7 @@ namespace Tomen {
 
 		}
 
-		ITomlValue ParseDateTime(Int32 year, Int32 month, Int32 day) {
+		TomlValue ParseDateTime(Int32 year, Int32 month, Int32 day) {
 			this.Consume(this.GetToken(0).Type);
 
 			TomlLocalTime time = this.ParseLocalTime();
@@ -259,16 +300,23 @@ namespace Tomen {
 			return new TomlDateTime(dateTime);
 		}
 
-		private String ParseKey() {
-			String key = "";
+		private TomlTable GetTableOrCreateDottedIfAbsent(String name, TomlTable parentTable) {
+			TomlTable table;
 
-			while (!this.LookMatch(0, TokenType.DOT) && !this.LookMatch(0, TokenType.RBRACKET)
-				&& !this.LookMatch(0, TokenType.ASSIGNMENT)) {
-				Token currentToken = this.GetToken(0);
-				key += this.Consume(currentToken.Type).Text;
+			if (parentTable.Contains(name)) {
+				if (parentTable[name] is TomlTable tomlTable) {
+					table = tomlTable;
+				}
+				else {
+					throw new TomlSemanticException($"value with key '{parentTable.Name}.{name}' is already exists and it is not a table", this.currentFile, this.currentLine);
+				}
+			}
+			else {
+				table = new TomlDottedTable(parentTable, name);
+				parentTable[name] = table;
 			}
 
-			return key;
+			return table;
 		}
 
 		private TomlTable GetTableOrCreateIfAbsent(String name, TomlTable parentTable) {
@@ -283,6 +331,10 @@ namespace Tomen {
 				}
 			}
 			else {
+				if (!(parentTable is TomlDottedTable) && parentTable.IsClosed) {
+					throw new TomlSemanticException($"table '{parentTable.Name}' is closed ", this.currentFile, this.currentLine);
+				}
+
 				table = new TomlTable(name);
 				parentTable[name] = table;
 			}

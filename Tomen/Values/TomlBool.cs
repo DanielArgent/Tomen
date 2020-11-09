@@ -2,7 +2,7 @@
 
 namespace Tomen { 
 	/// <summary> Toml logical value (true or false) </summary>
-	public class TomlBool : ITomlValue {
+	public class TomlBool : TomlValue {
 		/// <summary> Internal value </summary>
 		public Boolean Value { get; }
 

@@ -15,11 +15,11 @@ namespace Tomen {
 		/// <summary> Writes Toml value into file </summary>
 		/// <param name="path"> Path to file </param>
 		/// <param name="value"> Toml value </param>
-		public static void WriteFile(String path, ITomlValue value) {
+		public static void WriteFile(String path, TomlValue value) {
 			File.WriteAllText(path, value.ToString());
 		}
 
-		public static void ToXml(ITomlValue value, String resultFile) {
+		public static void ToXml(TomlValue value, String resultFile) {
 			XmlDocument document = new XmlDocument();
 			document.LoadXml($"<?xml version=\"1.0\" encoding=\"UTF-8\"?><root></root>");
 
@@ -28,18 +28,18 @@ namespace Tomen {
 			document.Save(resultFile);
 		}
 
-		private static void TomlValueToXml(ITomlValue value, XmlElement node, XmlDocument document) {
+		private static void TomlValueToXml(TomlValue value, XmlElement node, XmlDocument document) {
 			if (value is TomlTable table) {
 				XmlElement tableNode = document.CreateElement(table.Name ?? "table");
 				node.AppendChild(tableNode);
-				foreach (System.Collections.Generic.KeyValuePair<String, ITomlValue> i in table.pairs) {
+				foreach (System.Collections.Generic.KeyValuePair<String, TomlValue> i in table.pairs) {
 					TomlValueToXml(i.Key, i.Value, tableNode, document);
 				}
 			}
 			else if (value is TomlArray array) {
 				XmlElement arrayNode = document.CreateElement("items");
 				node.AppendChild(arrayNode);
-				foreach (ITomlValue i in array.Value) {
+				foreach (TomlValue i in array.Value) {
 					TomlValueToXml("item", i, arrayNode, document);
 				}
 			} else {
@@ -49,7 +49,7 @@ namespace Tomen {
 			}
 		}
 
-		private static void TomlValueToXml(String name, ITomlValue value, XmlElement node, XmlDocument document) {
+		private static void TomlValueToXml(String name, TomlValue value, XmlElement node, XmlDocument document) {
 			XmlElement newNode;
 
 			if (Lexer.IsValidId(name)) {
@@ -63,12 +63,12 @@ namespace Tomen {
 			}
 
 			if (value is TomlTable table) {
-				foreach (System.Collections.Generic.KeyValuePair<String, ITomlValue> i in table.pairs) {
+				foreach (System.Collections.Generic.KeyValuePair<String, TomlValue> i in table.pairs) {
 					TomlValueToXml(i.Key, i.Value, newNode, document);
 				}
 			}
 			else if (value is TomlArray array) {
-				foreach(ITomlValue i in array.Value) {
+				foreach(TomlValue i in array.Value) {
 					TomlValueToXml("item", i, newNode, document);
 				}
 			}
@@ -81,7 +81,7 @@ namespace Tomen {
 			node.AppendChild(newNode);
 		}
 
-		private static String ExtractString(ITomlValue value) {
+		private static String ExtractString(TomlValue value) {
 			if(value is TomlString tomlString) {
 				return tomlString.Value;
 			} else if (value is TomlNull) {

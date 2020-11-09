@@ -1,0 +1,6 @@
+﻿[fruit]
+apple.color = "red"
+apple.taste.sweet = true
+
+[fruit.apple]  # INVALID
+smooth = true
