@@ -21,9 +21,9 @@ namespace Tomen {
 		private readonly String source;
 		private readonly Int32 length;
 		private readonly List<Token> tokens;
+		private readonly String currentFile;
 		private Int32 position;
 		private Int32 currentLine;
-		private readonly String currentFile;
 
 		internal Lexer(String source, String file) {
 			this.currentFile = file;
@@ -44,7 +44,7 @@ namespace Tomen {
 				else if (current == '\'') {
 					this.LiteralString();
 				}
-				else if (Char.IsDigit(current) || current == '_') {
+				else if (Char.IsDigit(current)) {
 					this.Digits();
 				}
 				else if (Char.IsLetter(current) || current == '_') {
@@ -65,45 +65,55 @@ namespace Tomen {
 		}
 
 		private void Digits() {
-			String result = "";
+			StringBuilder result = new StringBuilder();
 
 			Char current = this.Peek();
-			while (Char.IsDigit(current)) {
-				if(result == "0" && "box".IndexOf(current) != -1) {
-					switch (current) {
-						case 'b':
-							this.ParseWithBase(2, "0" + current);
-							return;
-						case 'o':
-							this.ParseWithBase(8, "0" + current);
-							return;
-						case 'x':
-							this.ParseWithBase(16, "0" + current);
-							return;
+			Char previous = '\0';
+
+			while (Char.IsDigit(current) || "_box".IndexOf(current) != -1) {
+				if ("box".IndexOf(current) != -1) {
+					if (previous == '0') {
+						switch (current) {
+							case 'b':
+								this.ParseWithBase(2, current);
+								return;
+							case 'o':
+								this.ParseWithBase(8, current);
+								return;
+							case 'x':
+								this.ParseWithBase(16, current);
+								return;
+						}
+					}
+					else {
+						this.position--;
+						break;
 					}
 				}
 
-				result += current;
+				result.Append(current);
 				current = this.Next();
 			}
 
-			this.AddToken(TokenType.DIGITS, result);
+			this.AddToken(TokenType.DIGITS, result.ToString());
 		}
 
 		const String VALID_CHARS = "0123456789abcedf";
 
-		private void ParseWithBase(Int32 requiredBase, String v) {
+		/// <param name="requiredBase">One of 2, 8, 16</param>
+		/// <param name="prefixChar">One of 'x', 'o', 'b'</param>
+		private void ParseWithBase(Int32 requiredBase, Char prefixChar) {
 			String validCharsForBase = VALID_CHARS.Substring(0, requiredBase);
 
-			String result = v;
+			StringBuilder result = new StringBuilder("0" + prefixChar);
 
-			Char current = this.Peek();
-			while (validCharsForBase.IndexOf(current) != -1) {
-				result += current;
+			Char current = this.Next();
+			while (validCharsForBase.IndexOf(Char.ToLower(current)) != -1 || current == '_') {
+				result.Append(current);
 				current = this.Next();
 			}
 
-			this.AddToken(TokenType.NUMBER_WITH_BASE, result);
+			this.AddToken(TokenType.NUMBER_WITH_BASE, result.ToString());
 		}
 
 		private void String() {
@@ -145,9 +155,10 @@ namespace Tomen {
 
 				// "A newline immediately following the opening delimiter will be trimmed"
 				Char currentChar = this.Peek(0);
-				if(currentChar == '\r' && this.Peek(1) == '\n') {
+				if (currentChar == '\r' && this.Peek(1) == '\n') {
 					this.Next(2);
-				} else if (currentChar == '\n') {
+				}
+				else if (currentChar == '\n') {
 					this.Next();
 				}
 			}
@@ -208,7 +219,7 @@ namespace Tomen {
 								// Ignore \n
 								current = this.Next();
 
-								while(Char.IsWhiteSpace(current)) {
+								while (Char.IsWhiteSpace(current)) {
 									current = this.Next();
 								}
 							}
@@ -383,12 +394,14 @@ namespace Tomen {
 			while ("\n\0".IndexOf(current) == -1) {
 				// According to v1.0.0-rc.2 character \r (U+000D) also not permitted
 				// But in fact, it appears on some platfroms on endlines, so we allow it.
-				if(current < 8 || (10 < current && current < 13) || (13 < current && current < 31) || current == 127) {
+				if (current < 8 || (10 < current && current < 13) || (13 < current && current < 31) || current == 127) {
 					throw new TomlSyntaxException($"control characters U+0000 to U+0008, U+000A to U+000C, U+000E to U+001F, U+007F are not permitted in comments, got char (U+{(Int32)current:X4})", this.currentFile, this.currentLine);
 				}
 
 				current = this.Next();
 			}
+
+			this.AddToken(TokenType.NL);
 
 			this.Next();
 		}

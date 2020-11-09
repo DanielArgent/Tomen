@@ -124,7 +124,7 @@ namespace Tomen {
 			}
 
 			if (this.LookMatch(0, TokenType.DIGITS)) {
-				String digits = this.Consume(TokenType.DIGITS).Text;
+				String digits = this.Consume(TokenType.DIGITS).Text.Replace("_", "");
 
 				// float
 				if (this.Match(TokenType.DOT)) {
