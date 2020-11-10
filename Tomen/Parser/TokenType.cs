@@ -28,6 +28,7 @@ namespace Tomen {
 		DATE_TIME_OFFSET,
 		DIGITS,
 		NUMBER_WITH_BASE,
-		COLON
+		COLON,
+		STAR
 	}
 }

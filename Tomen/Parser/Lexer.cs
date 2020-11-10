@@ -17,6 +17,7 @@ namespace Tomen {
 			["."] = new Token(TokenType.DOT, "."),
 			[":"] = new Token(TokenType.COLON, ":"),
 			[","] = new Token(TokenType.SPLIT, "."),
+			["*"] = new Token(TokenType.STAR, "*"),
 		};
 		private readonly String source;
 		private readonly Int32 length;
@@ -25,6 +26,7 @@ namespace Tomen {
 		private Int32 position;
 		private Int32 currentLine;
 		private Boolean isValueSide;
+		private Boolean isArrayContext;
 
 		internal Lexer(String source, String file) {
 			this.currentFile = file;
@@ -47,7 +49,7 @@ namespace Tomen {
 					this.LiteralString();
 				}
 				else if (isValueSide && Char.IsDigit(current)) {
-					this.Digits();
+					this.Number();
 				}
 				else if (Char.IsLetterOrDigit(current) || current == '_' || (!isValueSide && current == '-')) {
 					this.BareKey();
@@ -66,13 +68,13 @@ namespace Tomen {
 			return this.tokens;
 		}
 
-		private void Digits() {
+		private void Number() {
 			StringBuilder result = new StringBuilder();
 
 			Char current = this.Peek();
 			Char previous = '\0';
 
-			while (Char.IsDigit(current) || "_box".IndexOf(current) != -1) {
+			while (Char.IsDigit(current) || "_boxeE.".IndexOf(current) != -1) {
 				if ("box".IndexOf(current) != -1) {
 					if (previous == '0') {
 						switch (current) {
@@ -93,9 +95,22 @@ namespace Tomen {
 					}
 				}
 
-				result.Append(current);
-				previous = current;
-				current = this.Next();
+				if (Char.ToLower(current) == 'e') {
+					result.Append(Char.ToLower(current));
+					previous = current;
+					current = this.Next();
+
+					if(current == '-' || current == '+') {
+						result.Append(current);
+						previous = current;
+						current = this.Next();
+					}
+				}
+				else {
+					result.Append(current);
+					previous = current;
+					current = this.Next();
+				}
 			}
 
 			this.AddToken(TokenType.DIGITS, result.ToString());
@@ -334,7 +349,8 @@ namespace Tomen {
 		private void Tabs() {
 			this.currentLine++;
 
-			this.isValueSide = false;
+			if(!isArrayContext)
+				this.isValueSide = false;
 
 			while (Char.IsWhiteSpace(this.Next())) { }
 
@@ -347,8 +363,8 @@ namespace Tomen {
 			Char current = this.Peek(0);
 
 			while (true) {
-				if (!Char.IsLetterOrDigit(current)
-					&& current != '_' && current != '-') {
+				if ((isValueSide && !Char.IsLetter(current)) || (!isValueSide && !Char.IsLetterOrDigit(current)
+					&& current != '_' && current != '-')) {
 					break;
 				}
 
@@ -400,6 +416,14 @@ namespace Tomen {
 
 					if(token.Type == TokenType.ASSIGNMENT) {
 						this.isValueSide = true;
+					}
+
+					if (isValueSide && token.Type == TokenType.LBRACKET) {
+						this.isArrayContext = true;
+					}
+
+					if (isValueSide && token.Type == TokenType.RBRACKET) {
+						this.isArrayContext = false;
 					}
 
 					this.AddToken(token);

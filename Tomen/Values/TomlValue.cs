@@ -25,7 +25,7 @@ namespace Tomen {
 			new TomlBool(value);
 
 		public static implicit operator TomlValue(DateTime value) =>
-			new TomlDateTime(value);
+			new TomlLocalDateTime(value);
 
 		public static implicit operator TomlValue(TomlValue[] nodes) {
 			var list = new System.Collections.Generic.List<TomlValue>();
@@ -37,11 +37,11 @@ namespace Tomen {
 
 		public static implicit operator string(TomlValue value) => value.ToString();
 
-		public static implicit operator int(TomlValue value) => (int)value.AsInt().Value;
+		public static implicit operator int(TomlValue value) => (int)(value.AsInt().Value);
 
 		public static implicit operator long(TomlValue value) => value.AsInt().Value;
 
-		public static implicit operator float(TomlValue value) => (float)value.AsDouble().Value;
+		public static implicit operator float(TomlValue value) => (float)(value.AsDouble().Value);
 
 		public static implicit operator double(TomlValue value) => value.AsDouble().Value;
 

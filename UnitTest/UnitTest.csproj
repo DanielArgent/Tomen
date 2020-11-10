@@ -49,13 +49,47 @@
     <Reference Include="System.Core" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ArrayTest.cs" />
+    <Compile Include="DateTimeTest.cs" />
+    <Compile Include="FloatsTest.cs" />
     <Compile Include="IntegersTest.cs" />
+    <Compile Include="TPathTest.cs" />
     <Compile Include="UnitTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TablesTest.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+    <None Include="toml\arrays\multiline-array.toml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="toml\dates\date-time.toml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="toml\dates\offset-date-time-spaced.toml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="toml\dates\offset-date-time.toml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="toml\dates\local-time.toml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="toml\floats\special-values.toml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="toml\floats\basics.toml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="toml\floats\signed.toml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="toml\floats\exponential.toml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="toml\floats\underscores.toml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Include="toml\integers\based.toml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
@@ -95,7 +129,7 @@
     <None Include="toml\key-value-pair.toml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Include="toml\dates.toml">
+    <None Include="toml\dates\local-date.toml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Include="toml\invalid-comments.toml">
@@ -117,6 +151,18 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Include="toml\strings.toml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="toml\tpath\empty-tables.toml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="toml\tpath\complicated-star-path.toml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="toml\tpath\star-path.toml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="toml\tpath\index-path.toml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Include="toml\tables\invalid-table-extension.toml">
