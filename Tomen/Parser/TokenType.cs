@@ -26,7 +26,7 @@ namespace Tomen {
 		DATE_TIME,
 		LOCAL_TIME,
 		DATE_TIME_OFFSET,
-		DIGITS,
+		NUMBER,
 		NUMBER_WITH_BASE,
 		COLON,
 		STAR

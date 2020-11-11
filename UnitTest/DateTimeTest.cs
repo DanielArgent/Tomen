@@ -5,7 +5,7 @@ using Tomen;
 namespace UnitTest {
 	[TestClass]
 	public class DateTimeTest {
-		[TestMethod]
+	[TestMethod]
 		public void TestLocalDate() {
 			TomlTable root = Tomen.Tomen.ReadFile("toml\\dates\\local-date.toml");
 

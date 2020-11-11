@@ -55,7 +55,8 @@ namespace Tomen {
 			while (!this.LookMatch(0, TokenType.LBRACKET) && !this.LookMatch(0, TokenType.EOF)) {
 				if (this.LookMatch(1, TokenType.DOT)) {
 					this.ParseDottedKeyValuePair(table);
-				} else {
+				}
+				else {
 					this.ParseKeyValuePair(table);
 				}
 			}
@@ -92,6 +93,10 @@ namespace Tomen {
 
 			if (parentTable.Contains(key)) {
 				throw new TomlSemanticException($"key {key} is already defined in this table", this.currentFile, this.currentLine);
+			}
+
+			if (table.IsClosed) {
+				throw new TomlSemanticException($"table '{table.Name}' is closed ", this.currentFile, this.currentLine);
 			}
 
 			table[key] = value;
@@ -131,45 +136,29 @@ namespace Tomen {
 
 		private TomlValue ParseValue() {
 			if (this.Match(TokenType.PLUS)) {
-				TomlValue value = this.ParseValue();
-				
-				if(value is TomlInt || value is TomlDouble) {
-					return value;
-				}
-
-				throw new TomlSemanticException("expected numeric value", this.currentFile, this.currentLine);
+				return ParsePlus();
 			}
 
 			if (this.Match(TokenType.MINUS)) {
-				TomlValue value = this.ParseValue();
-
-				if (value is TomlInt ti) {
-					return new TomlInt(-ti.Value);
-				}
-
-				if (value is TomlDouble td) {
-					return new TomlDouble(-td.Value);
-				}
-
-				throw new TomlSemanticException("expected numeric value", this.currentFile, this.currentLine);
+				return ParseMinus();
 			}
 
 			if (this.LookMatch(0, TokenType.TEXT)) {
 				return new TomlString(this.Consume(TokenType.TEXT).Text);
 			}
 
-			if (this.LookMatch(0, TokenType.DIGITS) && this.LookMatch(1, TokenType.COLON)) {
+			if (this.LookMatch(0, TokenType.NUMBER) && this.LookMatch(1, TokenType.COLON)) {
 				return this.ParseLocalTime();
 			}
 
-			if (this.LookMatch(0, TokenType.DIGITS) && this.LookMatch(1, TokenType.MINUS)) {
+			if (this.LookMatch(0, TokenType.NUMBER) && this.LookMatch(1, TokenType.MINUS)) {
 				return this.ParseDate();
 			}
 
-			if (this.LookMatch(0, TokenType.DIGITS)) {
-				String digits = this.Consume(TokenType.DIGITS).Text.Replace("_", "");
+			if (this.LookMatch(0, TokenType.NUMBER)) {
+				String digits = this.Consume(TokenType.NUMBER).Text.Replace("_", "");
 
-				if(digits.Contains("e") || digits.Contains(".")) {
+				if (digits.Contains("e") || digits.Contains(".")) {
 					return new TomlDouble(Double.Parse(digits, CultureInfo.InvariantCulture));
 				}
 
@@ -177,24 +166,7 @@ namespace Tomen {
 			}
 
 			if (this.LookMatch(0, TokenType.NUMBER_WITH_BASE)) {
-				String number = this.Consume(TokenType.NUMBER_WITH_BASE).Text.Replace("_", "");
-
-				// hexadecimal number
-				if (number.StartsWith("0x")) {
-					return new TomlInt(Convert.ToInt64(number.Substring(2), 16));
-				}
-
-				// octal number
-				if (number.StartsWith("0o")) {
-					return new TomlInt(Convert.ToInt64(number.Substring(2), 8));
-				}
-
-				// binary number
-				if (number.StartsWith("0b")) {
-					return new TomlInt(Convert.ToInt64(number.Substring(2), 2));
-				}
-
-				throw new TomlSemanticException("impossible base", this.currentFile, this.currentLine);
+				return ParseNumberWithBase();
 			}
 
 			if (this.Match(TokenType.INF)) {
@@ -214,26 +186,120 @@ namespace Tomen {
 			}
 
 			if (this.Match(TokenType.LBRACKET)) {
-				List<TomlValue> items = new List<TomlValue>();
+				return ParseArray();
+			}
 
-				this.Match(TokenType.NL);
-				while (!this.Match(TokenType.RBRACKET)) {
-					items.Add(this.ParseValue());
-					this.Match(TokenType.SPLIT);
-					this.Match(TokenType.NL);
-					this.Match(TokenType.SPLIT); // ?
-				}
-
-				return new TomlArray(items);
+			if (this.Match(TokenType.LBRACE)) {
+				return ParseInineTable();
 			}
 
 			return TomlNull.NULL;
 		}
 
+		private TomlValue ParseInineTable() {
+			TomlTable inlineTable = new TomlInlineTable();
+
+			while (!this.Match(TokenType.RBRACE)) {
+				// If there is no key
+				if (!this.LookMatch(0, TokenType.BAREKEY)) {
+					throw new TomlSyntaxException($"expected key, got '{GetToken(0)}'", this.currentFile, this.currentLine);
+				}
+
+				String key;
+				TomlTable table = inlineTable;
+
+				while (this.LookMatch(1, TokenType.DOT)) {
+					key = this.Consume(TokenType.BAREKEY).Text;
+					table = this.GetTableOrCreateDottedIfAbsent(key, table);
+					this.Match(TokenType.DOT);
+				}
+
+				key = this.Consume(TokenType.BAREKEY).Text;
+
+				this.Consume(TokenType.ASSIGNMENT);
+
+				// There is no value
+				if (this.Match(TokenType.NL) || this.Match(TokenType.EOF) || this.Match(TokenType.RBRACE)) {
+					throw new TomlSyntaxException("unspecified value", this.currentFile, this.currentLine);
+				}
+
+				var value = this.ParseValue();
+
+				if (table.Contains(key)) {
+					throw new TomlSemanticException($"key {key} is already defined in this table", this.currentFile, this.currentLine);
+				}
+
+				table[key] = value;
+
+				this.Match(TokenType.SPLIT);
+			}
+
+			return inlineTable;
+		}
+
+		private TomlValue ParseArray() {
+			List<TomlValue> items = new List<TomlValue>();
+
+			this.Match(TokenType.NL);
+			while (!this.Match(TokenType.RBRACKET)) {
+				items.Add(this.ParseValue());
+				this.Match(TokenType.SPLIT);
+				this.Match(TokenType.NL);
+				this.Match(TokenType.SPLIT); // ?
+			}
+
+			return new TomlArray(items);
+		}
+
+		private TomlValue ParseNumberWithBase() {
+			String number = this.Consume(TokenType.NUMBER_WITH_BASE).Text.Replace("_", "");
+
+			// hexadecimal number
+			if (number.StartsWith("0x")) {
+				return new TomlInt(Convert.ToInt64(number.Substring(2), 16));
+			}
+
+			// octal number
+			if (number.StartsWith("0o")) {
+				return new TomlInt(Convert.ToInt64(number.Substring(2), 8));
+			}
+
+			// binary number
+			if (number.StartsWith("0b")) {
+				return new TomlInt(Convert.ToInt64(number.Substring(2), 2));
+			}
+
+			throw new TomlSemanticException("impossible base", this.currentFile, this.currentLine);
+		}
+
+		private TomlValue ParseMinus() {
+			TomlValue value = this.ParseValue();
+
+			if (value is TomlInt ti) {
+				return new TomlInt(-ti.Value);
+			}
+
+			if (value is TomlDouble td) {
+				return new TomlDouble(-td.Value);
+			}
+
+			throw new TomlSemanticException("expected numeric value", this.currentFile, this.currentLine);
+		}
+
+		private TomlValue ParsePlus() {
+			TomlValue value = this.ParseValue();
+
+			if (value is TomlInt || value is TomlDouble) {
+				return value;
+			}
+
+			throw new TomlSemanticException("expected numeric value", this.currentFile, this.currentLine);
+		}
+
 		Tuple<Int32, Int32> ParseHoursAndMinutes() {
-			Int32 hours = Convert.ToInt32(this.Consume(TokenType.DIGITS).Text);
+			Int32 hours = Convert.ToInt32(this.Consume(TokenType.NUMBER).Text);
 			this.Consume(TokenType.COLON);
-			Int32 minutes = Convert.ToInt32(this.Consume(TokenType.DIGITS).Text);
+			Int32 minutes = Convert.ToInt32(this.Consume(TokenType.NUMBER).Text);
 
 			return new Tuple<Int32, Int32>(hours, minutes);
 		}
@@ -242,7 +308,7 @@ namespace Tomen {
 			Tuple<Int32, Int32> hoursAndMinutes = this.ParseHoursAndMinutes();
 			this.Consume(TokenType.COLON);
 
-			String secondsStr = this.Consume(TokenType.DIGITS).Text;
+			String secondsStr = this.Consume(TokenType.NUMBER).Text;
 			if (secondsStr.Contains(".")) {
 				String[] parts = secondsStr.Split('.');
 
@@ -259,15 +325,15 @@ namespace Tomen {
 		}
 
 		TomlValue ParseDate() {
-			Int32 year = Convert.ToInt32(this.Consume(TokenType.DIGITS).Text);
+			Int32 year = Convert.ToInt32(this.Consume(TokenType.NUMBER).Text);
 			this.Consume(TokenType.MINUS);
-			Int32 month = Convert.ToInt32(this.Consume(TokenType.DIGITS).Text);
+			Int32 month = Convert.ToInt32(this.Consume(TokenType.NUMBER).Text);
 			this.Consume(TokenType.MINUS);
-			Int32 day = Convert.ToInt32(this.Consume(TokenType.DIGITS).Text);
+			Int32 day = Convert.ToInt32(this.Consume(TokenType.NUMBER).Text);
 
 
-			if ((this.LookMatch(0, TokenType.BAREKEY) 
-				&& this.GetToken(0).Text.ToUpper() == "T") || this.GetToken(0).Type == TokenType.DIGITS) {
+			if ((this.LookMatch(0, TokenType.BAREKEY)
+				&& this.GetToken(0).Text.ToUpper() == "T") || this.GetToken(0).Type == TokenType.NUMBER) {
 				return this.ParseDateTime(year, month, day);
 			}
 			else {

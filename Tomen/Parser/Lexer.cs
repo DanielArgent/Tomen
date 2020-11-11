@@ -27,6 +27,7 @@ namespace Tomen {
 		private Int32 currentLine;
 		private Boolean isValueSide;
 		private Boolean isArrayContext;
+		private Boolean isInlineContext;
 
 		internal Lexer(String source, String file) {
 			this.currentFile = file;
@@ -113,7 +114,7 @@ namespace Tomen {
 				}
 			}
 
-			this.AddToken(TokenType.DIGITS, result.ToString());
+			this.AddToken(TokenType.NUMBER, result.ToString());
 		}
 
 		const String VALID_CHARS = "0123456789abcedf";
@@ -418,12 +419,24 @@ namespace Tomen {
 						this.isValueSide = true;
 					}
 
+					if (isInlineContext && token.Type == TokenType.SPLIT) {
+						this.isValueSide = false;
+					}
+
 					if (isValueSide && token.Type == TokenType.LBRACKET) {
 						this.isArrayContext = true;
 					}
 
 					if (isValueSide && token.Type == TokenType.RBRACKET) {
 						this.isArrayContext = false;
+					}
+
+					if (isValueSide && token.Type == TokenType.LBRACE) {
+						this.isInlineContext = true;
+					}
+
+					if (isValueSide && token.Type == TokenType.RBRACE) {
+						this.isInlineContext = false;
 					}
 
 					this.AddToken(token);

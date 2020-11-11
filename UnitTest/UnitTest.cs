@@ -47,13 +47,6 @@ namespace UnitTest {
 			Assert.AreEqual(8, (table["1102"] as TomlInt).Value);
 		}
 
-	/*	[TestMethod]
-		public void TestDates() {
-			TomlTable table = Tomen.Tomen.ReadFile("toml\\dates.toml");
-
-			Assert.AreEqual(28, (table["date"] as TomlLocalDate).Day);
-		}
-	*/
 		[TestMethod]
 		public void TestInvalidStringLiteral() {
 			Assert.ThrowsException<TomlSyntaxException>(() =>

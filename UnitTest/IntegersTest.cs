@@ -3,7 +3,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Tomen;
 
 namespace UnitTest {
-	[TestClass]
+[TestClass]
 	public class IntegersTest {
 		[TestMethod]
 		public void TestSigned() {

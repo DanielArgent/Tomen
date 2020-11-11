@@ -114,4 +114,10 @@ namespace Tomen {
 			this.parent = parent;
 		}
 	}
+
+	internal class TomlInlineTable : TomlTable {
+		public override Boolean IsClosed => true;
+
+		public TomlInlineTable() : base("") { }
+	}
 }

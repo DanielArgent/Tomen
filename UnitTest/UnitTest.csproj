@@ -52,6 +52,7 @@
     <Compile Include="ArrayTest.cs" />
     <Compile Include="DateTimeTest.cs" />
     <Compile Include="FloatsTest.cs" />
+    <Compile Include="InlineTablesTest.cs" />
     <Compile Include="IntegersTest.cs" />
     <Compile Include="TPathTest.cs" />
     <Compile Include="UnitTest.cs" />
@@ -88,6 +89,27 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Include="toml\floats\underscores.toml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="toml\inline\invalid-inline-closed-2.toml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="toml\inline\invalid-inline-already-def.toml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="toml\inline\invalid-inline-closed.toml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="toml\inline\invalid-inline-redef-key-insub.toml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="toml\inline\invalid-inline-redef-key.toml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="toml\inline\invalid-inline.toml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="toml\inline\inline.toml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Include="toml\integers\based.toml">
