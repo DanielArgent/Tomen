@@ -5,7 +5,7 @@ using Tomen;
 namespace UnitTest {
 	[TestClass]
 	public class DateTimeTest {
-	[TestMethod]
+		[TestMethod]
 		public void TestLocalDate() {
 			TomlTable root = Tomen.Tomen.ReadFile("toml\\dates\\local-date.toml");
 
@@ -24,7 +24,7 @@ namespace UnitTest {
 		public void TestOffsetDateTime() {
 			TomlTable root = Tomen.Tomen.ReadFile("toml\\dates\\offset-date-time.toml");
 
-			Assert.IsTrue(new DateTimeOffset(new DateTime(1979, 05, 27, 07, 32, 0), new TimeSpan()).EqualsExact( 
+			Assert.IsTrue(new DateTimeOffset(new DateTime(1979, 05, 27, 07, 32, 0), new TimeSpan()).EqualsExact(
 				root.Path<DateTimeOffset>("odt1")));
 			Assert.IsTrue(new DateTimeOffset(new DateTime(1979, 05, 27, 0, 32, 0), new TimeSpan(-7, 0, 0)).EqualsExact(
 				root.Path<DateTimeOffset>("odt2")));
@@ -51,7 +51,7 @@ namespace UnitTest {
 
 			Assert.AreEqual(new DateTime(1979, 05, 27, 07, 32, 0),
 				root.Path<DateTime>("ldt1"));
-			Assert.AreEqual(new DateTime(1979, 05, 27, 0, 32, 0, 999), 
+			Assert.AreEqual(new DateTime(1979, 05, 27, 0, 32, 0, 999),
 				root.Path<DateTime>("ldt2"));
 		}
 	}

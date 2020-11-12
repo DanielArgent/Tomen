@@ -64,6 +64,18 @@
     <None Include="toml\arrays\multiline-array.toml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Include="toml\array_tables\invalid-subtables-2.toml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="toml\array_tables\invalid-subtables.toml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="toml\array_tables\subtables.toml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="toml\array_tables\basics.toml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Include="toml\dates\date-time.toml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

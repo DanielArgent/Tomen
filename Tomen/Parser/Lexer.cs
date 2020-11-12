@@ -355,7 +355,8 @@ namespace Tomen {
 
 			while (Char.IsWhiteSpace(this.Next())) { }
 
-			this.AddToken(TokenType.NL);
+			if(this.tokens.Count > 0 && this.tokens[this.tokens.Count - 1].Type != TokenType.NL)
+				this.AddToken(TokenType.NL);
 		}
 
 		private void BareKey() {

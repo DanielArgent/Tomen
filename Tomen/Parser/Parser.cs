@@ -26,7 +26,10 @@ namespace Tomen {
 			while (!this.LookMatch(0, TokenType.EOF)) {
 				this.Match(TokenType.NL);
 
-				if (this.Match(TokenType.LBRACKET)) {
+				if (this.LookMatch(0, TokenType.LBRACKET) && this.LookMatch(1, TokenType.LBRACKET)) {
+					this.ParseArrayOfTables(rootTable);
+				}
+				else if (this.Match(TokenType.LBRACKET)) {
 					this.ParseTableDefinition(rootTable);
 				}
 				else if (this.LookMatch(1, TokenType.DOT)) {
@@ -38,6 +41,49 @@ namespace Tomen {
 			}
 
 			return rootTable;
+		}
+
+		private void ParseArrayOfTables(TomlTable rootTable) {
+			this.Match(TokenType.LBRACKET);
+			this.Match(TokenType.LBRACKET);
+
+			String key;
+			TomlTable table = rootTable;
+
+			while (this.LookMatch(1, TokenType.DOT)) {
+				key = this.Consume(TokenType.BAREKEY).Text;
+				table = this.GetTableOrCreateIfAbsent(key, table);
+				this.Match(TokenType.DOT);
+			}
+
+			key = this.Consume(TokenType.BAREKEY).Text;
+
+			this.Consume(TokenType.RBRACKET);
+			this.Consume(TokenType.RBRACKET);
+			this.Match(TokenType.NL);
+
+			var newTable = new TomlTable(null);
+
+			while (!this.LookMatch(0, TokenType.LBRACKET) && !this.LookMatch(0, TokenType.EOF)) {
+				if (this.LookMatch(1, TokenType.DOT)) {
+					this.ParseDottedKeyValuePair(newTable);
+				}
+				else {
+					this.ParseKeyValuePair(newTable);
+				}
+			}
+
+			if (table.Contains(key)) {
+				if (table[key] is TomlArrayOfTables arrayOfTables) {
+					arrayOfTables.Value.Add(newTable);
+				}
+				else {
+					throw new TomlSemanticException($"key '{key}' is already exists and it is not an array of tables", this.currentFile, this.currentLine);
+				}
+			}
+			else {
+				table[key] = new TomlArrayOfTables(new List<TomlValue> { newTable });
+			}
 		}
 
 		private void ParseTableDefinition(TomlTable parentTable) {
@@ -375,6 +421,9 @@ namespace Tomen {
 				if (parentTable[name] is TomlTable tomlTable) {
 					table = tomlTable;
 				}
+				else if (parentTable[name] is TomlArrayOfTables tomlArrayOfTables) {
+					return tomlArrayOfTables.Value[tomlArrayOfTables.Value.Count - 1] as TomlTable;
+				}
 				else {
 					throw new TomlSemanticException($"value with key '{parentTable.Name}.{name}' is already exists and it is not a table", this.currentFile, this.currentLine);
 				}
@@ -393,6 +442,9 @@ namespace Tomen {
 			if (parentTable.Contains(name)) {
 				if (parentTable[name] is TomlTable tomlTable) {
 					table = tomlTable;
+				}
+				else if (parentTable[name] is TomlArrayOfTables tomlArrayOfTables) {
+					return tomlArrayOfTables.Value[tomlArrayOfTables.Value.Count - 1] as TomlTable;
 				}
 				else {
 					throw new TomlSemanticException($"value with key '{parentTable.Name}.{name}' is already exists and it is not ITomlOpenTable", this.currentFile, this.currentLine);

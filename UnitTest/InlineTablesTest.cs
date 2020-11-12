@@ -5,7 +5,7 @@ using Tomen;
 namespace UnitTest {
 	[TestClass]
 	public class InlineTablesTest {
-		/*[TestMethod]
+		[TestMethod]
 		public void TestInline() {
 			TomlTable root = Tomen.Tomen.ReadFile("toml\\inline\\inline.toml");
 
@@ -38,17 +38,17 @@ namespace UnitTest {
 			Assert.ThrowsException<TomlSemanticException>(() =>
 			Tomen.Tomen.ReadFile("toml\\inline\\invalid-inline-closed.toml"));
 		}
-		*/
+		
 		[TestMethod]
 		public void TestInvalidInlineClosed2() {
 			Assert.ThrowsException<TomlSemanticException>(() =>
 			Tomen.Tomen.ReadFile("toml\\inline\\invalid-inline-closed-2.toml"));
 		}
-		/*
+		
 		[TestMethod]
 		public void TestInvalidInlineAlreadyDef() {
 			Assert.ThrowsException<TomlSemanticException>(() =>
 			Tomen.Tomen.ReadFile("toml\\inline\\invalid-inline-already-def.toml"));
-		}*/
+		}
 	}
 }

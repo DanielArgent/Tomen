@@ -1,0 +1,18 @@
+﻿[[fruit]]
+  name = "apple"
+
+  [fruit.physical]  # subtable
+    color = "red"
+    shape = "round"
+
+  [[fruit.variety]]  # nested array of tables
+    name = "red delicious"
+
+  [[fruit.variety]]
+    name = "granny smith"
+
+[[fruit]]
+  name = "banana"
+
+  [[fruit.variety]]
+    name = "plantain"
