@@ -17,7 +17,7 @@ namespace Tomen {
 			["."] = new Token(TokenType.DOT, "."),
 			[":"] = new Token(TokenType.COLON, ":"),
 			[","] = new Token(TokenType.SPLIT, "."),
-			["*"] = new Token(TokenType.STAR, "*"),
+			["*"] = new Token(TokenType.STAR, "*")
 		};
 		private readonly String source;
 		private readonly Int32 length;

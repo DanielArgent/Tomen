@@ -12,7 +12,7 @@ namespace Tomen {
 
 		/// <summary> Convert to valid literal </summary>
 		public override String ToString() {
-			return Lexer.Normalize(this.Value);
+			return $@"""{this.Value.Replace("\\", "\\\\").Replace("\"", "\\\"").Replace("\r", "\\r").Replace("\f", "\\f").Replace("\t", "\\t").Replace("\n", "\\n").Replace("\b", "\\b").Replace(Environment.NewLine, "\\r\\n")}""";
 		}
 	}
 }

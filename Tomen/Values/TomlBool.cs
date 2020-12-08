@@ -11,7 +11,7 @@ namespace Tomen {
 		}
 
 		public override String ToString() {
-			return this.Value.ToString(System.Globalization.CultureInfo.InvariantCulture).ToLower();
+			return this.Value ? "true" : "false";
 		}
 	}
 }

@@ -12,6 +12,13 @@ namespace Tomen {
 			return new Parser(new Lexer(File.ReadAllText(path), path).GetTokens(), path).Parse();
 		}
 
+		/// <summary> Reads string into TomlTable </summary>
+		/// <param name="path">String with TOML code</param>
+		/// <returns>Root table</returns>
+		public static TomlTable ReadString(String content) {
+			return new Parser(new Lexer(content, "").GetTokens(), "").Parse();
+		}
+
 		/// <summary> Writes Toml value into file </summary>
 		/// <param name="path"> Path to file </param>
 		/// <param name="value"> Toml value </param>
@@ -84,8 +91,6 @@ namespace Tomen {
 		private static String ExtractString(TomlValue value) {
 			if(value is TomlString tomlString) {
 				return tomlString.Value;
-			} else if (value is TomlNull) {
-				return "";
 			}
 
 			return value.ToString();

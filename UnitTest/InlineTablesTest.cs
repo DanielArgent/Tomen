@@ -13,6 +13,8 @@ namespace UnitTest {
 			Assert.AreEqual(1, root.Path<Int64>("point.x"));
 			Assert.AreEqual(2, root.Path<Int64>("point.y"));
 			Assert.AreEqual("pug", root.Path<String>("animal.type.name"));
+
+			System.IO.File.WriteAllText("inline-output.toml", root.ToString());
 		}
 
 		[TestMethod]

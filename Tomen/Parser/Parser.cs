@@ -62,7 +62,7 @@ namespace Tomen {
 			this.Consume(TokenType.RBRACKET);
 			this.Match(TokenType.NL);
 
-			var newTable = new TomlTable(null);
+			TomlTable newTable = new TomlTable(null);
 
 			while (!this.LookMatch(0, TokenType.LBRACKET) && !this.LookMatch(0, TokenType.EOF)) {
 				if (this.LookMatch(1, TokenType.DOT)) {
@@ -82,7 +82,7 @@ namespace Tomen {
 				}
 			}
 			else {
-				table[key] = new TomlArrayOfTables(new List<TomlValue> { newTable });
+				table[key] = new TomlArrayOfTables(key, new List<TomlValue> { newTable });
 			}
 		}
 
@@ -131,14 +131,14 @@ namespace Tomen {
 				throw new TomlSyntaxException("unspecified value", this.currentFile, this.currentLine);
 			}
 
-			var value = this.ParseValue();
+			TomlValue value = this.ParseValue();
 
 			if (!this.Match(TokenType.NL) && !this.LookMatch(0, TokenType.EOF)) {
 				throw new TomlSyntaxException("there must be a newline or end of file after a key/value pair", this.currentFile, this.currentLine);
 			}
 
 			if (parentTable.Contains(key)) {
-				throw new TomlSemanticException($"key {key} is already defined in this table", this.currentFile, this.currentLine);
+				throw new TomlSemanticException($"key '{key}' is already defined in this table", this.currentFile, this.currentLine);
 			}
 
 			if (table.IsClosed) {
@@ -174,7 +174,7 @@ namespace Tomen {
 			}
 
 			if (parentTable.Contains(key)) {
-				throw new TomlSemanticException($"key {key} is already defined in this table", this.currentFile, this.currentLine);
+				throw new TomlSemanticException($"key '{key}' is already defined in this table", this.currentFile, this.currentLine);
 			}
 
 			parentTable[key] = value;
@@ -239,7 +239,7 @@ namespace Tomen {
 				return ParseInineTable();
 			}
 
-			return TomlNull.NULL;
+			throw new TomlSyntaxException($"unexpected token {this.GetToken(0).Type}", this.currentFile, this.currentLine);
 		}
 
 		private TomlValue ParseInineTable() {
@@ -377,16 +377,13 @@ namespace Tomen {
 			this.Consume(TokenType.MINUS);
 			Int32 day = Convert.ToInt32(this.Consume(TokenType.NUMBER).Text);
 
-
-			if ((this.LookMatch(0, TokenType.BAREKEY)
-				&& this.GetToken(0).Text.ToUpper() == "T") || this.GetToken(0).Type == TokenType.NUMBER) {
+			if ((this.LookMatch(0, TokenType.BAREKEY) && this.GetToken(0).Text.ToUpper() == "T") 
+				|| this.GetToken(0).Type == TokenType.NUMBER) {
 				return this.ParseDateTime(year, month, day);
 			}
 			else {
 				return new TomlLocalDate(year, month, day);
 			}
-
-
 		}
 
 		TomlValue ParseDateTime(Int32 year, Int32 month, Int32 day) {

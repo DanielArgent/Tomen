@@ -11,6 +11,8 @@ namespace UnitTest {
 
 			Assert.AreEqual(5, root.Path<Int64>("a.y"));
 			Assert.AreEqual(9, root.Path<Int64>("a.b.x"));
+
+			System.IO.File.WriteAllText("explicitly-correct-output.toml", root.ToString());
 		}
 
 		[TestMethod]
@@ -18,6 +20,8 @@ namespace UnitTest {
 			TomlTable root = Tomen.Tomen.ReadFile("toml\\tables\\explicitly-correct-2.toml");
 
 			Assert.AreEqual(9, root.Path<Int64>("a.b.x"));
+
+			System.IO.File.WriteAllText("explicitly-correct2-output.toml", root.ToString());
 		}
 
 		[TestMethod]
@@ -50,6 +54,8 @@ namespace UnitTest {
 			TomlTable root = Tomen.Tomen.ReadFile("toml\\tables\\empty-tables.toml");
 
 			Assert.AreEqual("Hello!", root.Path<String>("x.y.z.w.value"));
+
+			System.IO.File.WriteAllText("empty-tables-output.toml", root.ToString());
 		}
 	}
 }

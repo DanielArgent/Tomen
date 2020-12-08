@@ -1,3 +1,7 @@
 ﻿name = { first = "Tom", last = "Preston-Werner" }
 point = { x = 1, y = 2 }
-animal = { type.name = "pug" }
+animal = { type.name = "pug", type.color="red" }
+
+[table]
+dotted.inline = { value = 9, in.inline = 7 }
+dooted.x = 9

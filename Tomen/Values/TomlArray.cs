@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text;
 using System.Collections.Generic;
 
 namespace Tomen {
@@ -14,9 +15,5 @@ namespace Tomen {
 		public override String ToString() {
 			return $"[{String.Join(", ", this.Value)}]";
 		}
-	}
-
-	internal class TomlArrayOfTables : TomlArray {
-		public TomlArrayOfTables(List<TomlValue> value) :base(value) { }
 	}
 }
